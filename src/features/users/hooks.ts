@@ -4,16 +4,14 @@ import { getCurrentUser } from "./api";
 
 export const userQueryKeys = {
   all: ["users"] as const,
-  me: () => [...userQueryKeys.all, "me"] as const,
+  me: ["users", "me"] as const,
 };
 
-export function useCurrentUser() {
+export function useCurrentUser(enabled: boolean) {
   return useQuery({
     queryKey: userQueryKeys.me,
     queryFn: getCurrentUser,
-    enabled:
-      typeof window !== "undefined" &&
-      Boolean(localStorage.getItem("accessToken")),
+    enabled,
     retry: false,
   });
 }

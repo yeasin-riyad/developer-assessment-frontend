@@ -1,6 +1,9 @@
 export enum UserRole {
   CANDIDATE = "CANDIDATE",
+  RECRUITER = "RECRUITER",
   CREATOR = "CREATOR",
+  EVALUATOR = "EVALUATOR",
+  ADMIN = "ADMIN",
 }
 
 export interface RegisterFormValues {

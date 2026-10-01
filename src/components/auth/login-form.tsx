@@ -32,13 +32,37 @@ import {
 import { validateWithZod } from "@/lib/form-validation";
 import { setAccessToken } from "@/lib/auth";
 
+const DEMO_ACCOUNTS = [
+  {
+    label: "Recruiter",
+    email: "recruiter@gmail.com",
+    password: "12345678",
+  },
+  {
+    label: "Creator",
+    email: "creator@gmail.com",
+    password: "12345678",
+  },
+  {
+    label: "Admin",
+    email: "admin@example.com",
+    password: "12345678",
+  },
+  {
+    label: "Evaluator",
+    email: "evaluator@gmail.com",
+    password: "12345678",
+  },
+] as const;
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const loginMutation = useLogin();
 
-  const registered = searchParams.get("registered");
+  const registered =
+    searchParams.get("registered");
 
   const form = useForm({
     defaultValues:
@@ -46,34 +70,68 @@ export function LoginForm() {
 
     validators: {
       onChange: ({ value }) =>
-        validateWithZod(loginSchema, value),
+        validateWithZod(
+          loginSchema,
+          value,
+        ),
     },
 
     onSubmit: async ({ value }) => {
-      try {
-        const response =
-          await loginMutation.mutateAsync({
-            email: value.email,
-            password: value.password,
-          });
-
-        if (response.data.accessToken) {
-        //   localStorage.setItem(
-        //     "accessToken",
-        //     response.data.accessToken,
-        //   );
-        setAccessToken(response.data.accessToken);
-
-        }
-
-        router.push("/dashboard");
-      } catch (error) {
-        console.error("Login failed:", error);
-      }
+      await handleLogin(
+        value.email,
+        value.password,
+      );
     },
   });
 
-  const isSubmitting = loginMutation.isPending;
+  const handleLogin = async (
+    email: string,
+    password: string,
+  ) => {
+    try {
+      const response =
+        await loginMutation.mutateAsync({
+          email,
+          password,
+        });
+
+      const accessToken =
+        response.data.accessToken;
+
+      if (!accessToken) {
+        throw new Error(
+          "Access token was not returned",
+        );
+      }
+
+      setAccessToken(accessToken);
+
+      /**
+       * Notify AuthProvider that
+       * authentication state changed.
+       */
+      window.dispatchEvent(
+        new Event("auth:changed"),
+      );
+
+      router.replace("/dashboard");
+    } catch (error) {
+      console.error(
+        "Login failed:",
+        error,
+      );
+    }
+  };
+
+  const handleDemoLogin = async (
+    email: string,
+    password: string,
+  ) => {
+    await handleLogin(email, password);
+  };
+
+  const isSubmitting =
+    loginMutation.isPending;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6">
@@ -90,19 +148,23 @@ export function LoginForm() {
 
         <CardContent>
           <div className="space-y-5">
+
+            {/* Registered Message */}
             {registered === "true" && (
               <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
                 <p className="text-sm text-green-700 dark:text-green-400">
-                  Account created successfully. Please sign
-                  in to continue.
+                  Account created successfully.
+                  Please sign in to continue.
                 </p>
               </div>
             )}
 
+            {/* Google Login */}
             <GoogleButton />
 
             <AuthDivider />
 
+            {/* Login Form */}
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -158,18 +220,9 @@ export function LoginForm() {
 
                   return (
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password">
-                          Password
-                        </Label>
-
-                        {/* <Link
-                          href="/forgot-password"
-                          className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                        >
-                          Forgot password?
-                        </Link> */}
-                      </div>
+                      <Label htmlFor="password">
+                        Password
+                      </Label>
 
                       <Input
                         id="password"
@@ -201,8 +254,7 @@ export function LoginForm() {
               {loginMutation.isError && (
                 <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3">
                   <p className="text-sm text-destructive">
-                    {loginMutation.error instanceof
-                    Error
+                    {loginMutation.error instanceof Error
                       ? loginMutation.error.message
                       : "Invalid email or password. Please try again."}
                   </p>
@@ -226,9 +278,49 @@ export function LoginForm() {
               </Button>
             </form>
 
+            {/* Demo Accounts */}
+            <div className="space-y-3">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Demo accounts
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <Button
+                    key={account.email}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isSubmitting}
+                    onClick={() =>
+                      handleDemoLogin(
+                        account.email,
+                        account.password,
+                      )
+                    }
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      `Login as ${account.label}`
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Register */}
             <p className="text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
+
               <Link
                 href="/register"
                 className="font-medium text-foreground underline-offset-4 hover:underline"

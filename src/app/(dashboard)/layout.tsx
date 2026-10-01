@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/providers/auth.provider";
 
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { useAuth } from "@/providers/auth.provider";
 
 export default function DashboardLayout({
   children,
@@ -19,7 +20,10 @@ export default function DashboardLayout({
   } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (
+      !isLoading &&
+      !isAuthenticated
+    ) {
       router.replace("/login");
     }
   }, [
@@ -31,20 +35,24 @@ export default function DashboardLayout({
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Loading...
-        </p>
+        <div className="text-center">
+          <div className="mx-auto mb-3 size-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+
+          <p className="text-sm text-muted-foreground">
+            Checking your session...
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return null;
   }
 
   return (
-    <div className="min-h-screen">
+    <DashboardShell>
       {children}
-    </div>
+    </DashboardShell>
   );
 }

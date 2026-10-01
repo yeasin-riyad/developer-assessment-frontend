@@ -7,6 +7,14 @@ import type {
   RegisterResponse,
 } from "./types";
 
+export interface RefreshTokenResponse {
+  success: boolean;
+  message: string;
+  data: {
+    accessToken: string;
+  };
+}
+
 export async function registerUser(
   payload: RegisterPayload,
 ): Promise<RegisterResponse> {
@@ -22,5 +30,17 @@ export async function loginUser(
   return api<LoginResponse>("/auth/login", {
     method: "POST",
     body: payload,
+  });
+}
+
+export async function refreshAccessToken(): Promise<RefreshTokenResponse> {
+  return api<RefreshTokenResponse>("/auth/refresh-token", {
+    method: "POST",
+  });
+}
+
+export async function logoutUser(): Promise<void> {
+  await api("/auth/logout", {
+    method: "POST",
   });
 }
