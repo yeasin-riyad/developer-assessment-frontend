@@ -30,6 +30,7 @@ import {
 } from "@/features/auth";
 
 import { validateWithZod } from "@/lib/form-validation";
+import { setAccessToken } from "@/lib/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -57,10 +58,12 @@ export function LoginForm() {
           });
 
         if (response.data.accessToken) {
-          localStorage.setItem(
-            "accessToken",
-            response.data.accessToken,
-          );
+        //   localStorage.setItem(
+        //     "accessToken",
+        //     response.data.accessToken,
+        //   );
+        setAccessToken(response.data.accessToken);
+
         }
 
         router.push("/dashboard");
