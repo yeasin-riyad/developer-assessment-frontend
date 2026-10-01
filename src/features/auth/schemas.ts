@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   UserRole,
   type RegisterFormValues,
+  type LoginFormValues,
 } from "./types";
 
 export const registerSchema = z
@@ -24,7 +25,9 @@ export const registerSchema = z
       .min(8, "Password must be at least 8 characters")
       .max(100, "Password must be less than 100 characters"),
 
-    confirmPassword: z.string(),
+    confirmPassword: z
+      .string()
+      .min(1, "Please confirm your password"),
 
     role: z.enum([
       UserRole.CANDIDATE,
@@ -41,9 +44,17 @@ export const registerSchema = z
     }
   });
 
-export type RegisterSchema = z.infer<
-  typeof registerSchema
->;
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Please enter a valid email address"),
+
+  password: z
+    .string()
+    .min(1, "Password is required"),
+});
 
 export const registerDefaultValues: RegisterFormValues = {
   name: "",
@@ -51,4 +62,9 @@ export const registerDefaultValues: RegisterFormValues = {
   password: "",
   confirmPassword: "",
   role: UserRole.CANDIDATE,
+};
+
+export const loginDefaultValues: LoginFormValues = {
+  email: "",
+  password: "",
 };

@@ -11,11 +11,21 @@ export interface RegisterFormValues {
   role: UserRole;
 }
 
+export interface LoginFormValues {
+  email: string;
+  password: string;
+}
+
 export interface RegisterPayload {
   name: string;
   email: string;
   password: string;
   role: UserRole;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
 }
 
 export interface AuthUser {
@@ -30,4 +40,13 @@ export interface RegisterResponse {
   success: boolean;
   message: string;
   data: AuthUser;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    accessToken: string;
+    user: AuthUser;
+  };
 }

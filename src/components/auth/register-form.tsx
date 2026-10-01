@@ -35,33 +35,45 @@ import {
   type RegisterFormValues,
 } from "@/features/auth";
 
-import { validateWithZod } from "@/lib/form-validation";
-
 export function RegisterForm() {
   const router = useRouter();
+
   const registerMutation = useRegister();
 
   const form = useForm({
     defaultValues:
       registerDefaultValues satisfies RegisterFormValues,
 
-    validators: {
-      onChange: ({ value }) =>
-        validateWithZod(registerSchema, value),
-    },
-
     onSubmit: async ({ value }) => {
+      /*
+       * Final full-form Zod validation
+       */
+      console.log("HI")
+      const result = registerSchema.safeParse(value);
+
+      if (!result.success) {
+        console.log(
+          "Validation failed:",
+          result.error.flatten(),
+        );
+
+        return;
+      }
+
       try {
         await registerMutation.mutateAsync({
-          name: value.name,
-          email: value.email,
-          password: value.password,
-          role: value.role,
+          name: result.data.name,
+          email: result.data.email,
+          password: result.data.password,
+          role: result.data.role,
         });
 
         router.push("/login?registered=true");
       } catch (error) {
-        console.error("Registration failed:", error);
+        console.error(
+          "Registration failed:",
+          error,
+        );
       }
     },
   });
@@ -84,10 +96,13 @@ export function RegisterForm() {
 
         <CardContent>
           <div className="mx-auto w-full max-w-2xl space-y-5">
+            {/* Google */}
             <GoogleButton />
 
+            {/* Divider */}
             <AuthDivider />
 
+            {/* Form */}
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -97,10 +112,32 @@ export function RegisterForm() {
               }}
               className="space-y-4"
             >
+              {/* ========================= */}
               {/* Name + Email */}
+              {/* ========================= */}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 {/* Name */}
-                <form.Field name="name">
+                <form.Field
+                  name="name"
+                  validators={{
+                    onChange: ({ value }) => {
+                      const result =
+                        registerSchema.shape.name.safeParse(
+                          value,
+                        );
+
+                      if (result.success) {
+                        return undefined;
+                      }
+
+                      return (
+                        result.error.issues[0]?.message ??
+                        "Invalid name"
+                      );
+                    },
+                  }}
+                >
                   {(field) => {
                     const error =
                       field.state.meta.errors[0];
@@ -137,7 +174,26 @@ export function RegisterForm() {
                 </form.Field>
 
                 {/* Email */}
-                <form.Field name="email">
+                <form.Field
+                  name="email"
+                  validators={{
+                    onChange: ({ value }) => {
+                      const result =
+                        registerSchema.shape.email.safeParse(
+                          value,
+                        );
+
+                      if (result.success) {
+                        return undefined;
+                      }
+
+                      return (
+                        result.error.issues[0]?.message ??
+                        "Invalid email"
+                      );
+                    },
+                  }}
+                >
                   {(field) => {
                     const error =
                       field.state.meta.errors[0];
@@ -175,8 +231,30 @@ export function RegisterForm() {
                 </form.Field>
               </div>
 
+              {/* ========================= */}
               {/* Role */}
-              <form.Field name="role">
+              {/* ========================= */}
+
+              <form.Field
+                name="role"
+                validators={{
+                  onChange: ({ value }) => {
+                    const result =
+                      registerSchema.shape.role.safeParse(
+                        value,
+                      );
+
+                    if (result.success) {
+                      return undefined;
+                    }
+
+                    return (
+                      result.error.issues[0]?.message ??
+                      "Please select a role"
+                    );
+                  },
+                }}
+              >
                 {(field) => {
                   const error =
                     field.state.meta.errors[0];
@@ -196,11 +274,11 @@ export function RegisterForm() {
 
                       <RadioGroup
                         value={field.state.value}
-                        onValueChange={(value) =>
+                        onValueChange={(value) => {
                           field.handleChange(
                             value as UserRole,
-                          )
-                        }
+                          );
+                        }}
                         disabled={isSubmitting}
                         className="grid gap-3 sm:grid-cols-2"
                       >
@@ -261,10 +339,32 @@ export function RegisterForm() {
                 }}
               </form.Field>
 
-              {/* Password + Confirm Password */}
+              {/* ========================= */}
+              {/* Password */}
+              {/* ========================= */}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 {/* Password */}
-                <form.Field name="password">
+                <form.Field
+                  name="password"
+                  validators={{
+                    onChange: ({ value }) => {
+                      const result =
+                        registerSchema.shape.password.safeParse(
+                          value,
+                        );
+
+                      if (result.success) {
+                        return undefined;
+                      }
+
+                      return (
+                        result.error.issues[0]?.message ??
+                        "Invalid password"
+                      );
+                    },
+                  }}
+                >
                   {(field) => {
                     const error =
                       field.state.meta.errors[0];
@@ -302,7 +402,25 @@ export function RegisterForm() {
                 </form.Field>
 
                 {/* Confirm Password */}
-                <form.Field name="confirmPassword">
+                <form.Field
+                  name="confirmPassword"
+                  validators={{
+                    onChange: ({ value }) => {
+                      if (!value) {
+                        return "Please confirm your password";
+                      }
+
+                      if (
+                        value !==
+                        form.getFieldValue("password")
+                      ) {
+                        return "Passwords do not match";
+                      }
+
+                      return undefined;
+                    },
+                  }}
+                >
                   {(field) => {
                     const error =
                       field.state.meta.errors[0];
@@ -340,7 +458,10 @@ export function RegisterForm() {
                 </form.Field>
               </div>
 
+              {/* ========================= */}
               {/* Backend Error */}
+              {/* ========================= */}
+
               {registerMutation.isError && (
                 <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5">
                   <p className="text-sm text-destructive">
@@ -352,7 +473,10 @@ export function RegisterForm() {
                 </div>
               )}
 
+              {/* ========================= */}
               {/* Submit */}
+              {/* ========================= */}
+
               <Button
                 type="submit"
                 className="h-10 w-full"
@@ -361,6 +485,7 @@ export function RegisterForm() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
+
                     Creating account...
                   </>
                 ) : (
@@ -369,7 +494,10 @@ export function RegisterForm() {
               </Button>
             </form>
 
+            {/* ========================= */}
             {/* Login */}
+            {/* ========================= */}
+
             <p className="pt-1 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
