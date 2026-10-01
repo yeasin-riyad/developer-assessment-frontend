@@ -1,6 +1,6 @@
 import { ofetch } from "ofetch";
 
-export const api = ofetch.create({
+const api = ofetch.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
 
   credentials: "include",
@@ -9,13 +9,20 @@ export const api = ofetch.create({
     "Content-Type": "application/json",
   },
 
-  onRequest({ options }) {
-    // Future:
-    // request headers / auth logic
-  },
-
   onResponseError({ response }) {
-    // Global API error handling
-    console.error("API Error:", response.status);
+    const data = response._data as
+      | {
+          success?: boolean;
+          message?: string;
+        }
+      | undefined;
+
+    const message =
+      data?.message ||
+      "Something went wrong. Please try again.";
+
+    throw new Error(message);
   },
 });
+
+export default api;
