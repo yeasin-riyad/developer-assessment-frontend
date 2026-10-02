@@ -1,11 +1,19 @@
-import React from 'react'
+import { CompanyProfile } from "@/features/company/components/company-profile";
 
-const companyPage = () => {
+export default function CompanyPage() {
   return (
-    <div>
-      company Page
-    </div>
-  )
-}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+          Company
+        </h1>
 
-export default companyPage
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage your company profile and information.
+        </p>
+      </div>
+
+      <CompanyProfile />
+    </div>
+  );
+}
