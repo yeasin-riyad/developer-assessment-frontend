@@ -95,7 +95,7 @@ export function DashboardHeader({
         />
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger>
             <Button
               variant="ghost"
               className="h-10 gap-2 px-2"
@@ -136,13 +136,13 @@ export function DashboardHeader({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem>
               <Link href="/profile">
                 Profile
               </Link>
             </DropdownMenuItem>
 
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem>
               <Link href="/settings">
                 Settings
               </Link>

@@ -1,7 +1,6 @@
 "use client";
 
-import type { FormApi } from "@tanstack/react-form";
-
+import type { AnyFormApi } from "@tanstack/react-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +16,7 @@ import {
 import type { CreateAssessmentFormValues } from "@/features/assessments";
 
 interface AssessmentBasicInfoProps {
-  form: FormApi<CreateAssessmentFormValues>;
+form: AnyFormApi;
   disabled: boolean;
 }
 
