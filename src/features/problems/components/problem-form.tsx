@@ -6,7 +6,6 @@ import { Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-
 import {
   ProblemDifficulty,
   ProblemType,
@@ -58,10 +57,7 @@ export function ProblemForm() {
 
     validators: {
       onChange: ({ value }) =>
-        validateWithZod(
-          createProblemSchema,
-          value,
-        ),
+        validateWithZod(createProblemSchema, value),
     },
 
     onSubmit: async ({ value }) => {
@@ -80,19 +76,16 @@ export function ProblemForm() {
             : {}),
         };
 
-        await createProblemMutation.mutateAsync(
-          payload,
-        );
+        await createProblemMutation.mutateAsync(payload);
 
         router.push("/problems");
       } catch {
-        // Mutation error is displayed below.
+        // API error is handled below.
       }
     },
   });
 
-  const isSubmitting =
-    createProblemMutation.isPending;
+  const isSubmitting = createProblemMutation.isPending;
 
   return (
     <form
@@ -136,8 +129,7 @@ export function ProblemForm() {
           </p>
 
           <p className="mt-1 text-sm text-destructive/90">
-            {createProblemMutation.error instanceof
-            Error
+            {createProblemMutation.error instanceof Error
               ? createProblemMutation.error.message
               : "Something went wrong. Please try again."}
           </p>

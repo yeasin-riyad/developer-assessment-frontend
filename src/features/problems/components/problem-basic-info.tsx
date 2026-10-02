@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
+import type { FormApi } from "@tanstack/react-form";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,10 +26,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ProblemDifficulty,
   ProblemType,
+  type CreateProblemFormValues,
 } from "@/features/problems";
 
 interface ProblemBasicInfoProps {
-  form: ReturnType<typeof useForm>;
+  form: FormApi<CreateProblemFormValues>;
   disabled: boolean;
 }
 
@@ -40,13 +41,10 @@ export function ProblemBasicInfo({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Basic Information
-        </CardTitle>
+        <CardTitle>Basic Information</CardTitle>
 
         <CardDescription>
-          Define the basic information for your
-          problem.
+          Define the basic information for your problem.
         </CardDescription>
       </CardHeader>
 
@@ -54,8 +52,7 @@ export function ProblemBasicInfo({
         {/* Title */}
         <form.Field name="title">
           {(field) => {
-            const error =
-              field.state.meta.errors[0];
+            const error = field.state.meta.errors[0];
 
             return (
               <div className="space-y-2">
@@ -74,11 +71,12 @@ export function ProblemBasicInfo({
                       event.target.value,
                     )
                   }
+                  aria-invalid={Boolean(error)}
                 />
 
                 {error && (
                   <p className="text-sm text-destructive">
-                    {error}
+                    {String(error)}
                   </p>
                 )}
               </div>
@@ -89,8 +87,7 @@ export function ProblemBasicInfo({
         {/* Description */}
         <form.Field name="description">
           {(field) => {
-            const error =
-              field.state.meta.errors[0];
+            const error = field.state.meta.errors[0];
 
             return (
               <div className="space-y-2">
@@ -110,11 +107,12 @@ export function ProblemBasicInfo({
                       event.target.value,
                     )
                   }
+                  aria-invalid={Boolean(error)}
                 />
 
                 {error && (
                   <p className="text-sm text-destructive">
-                    {error}
+                    {String(error)}
                   </p>
                 )}
               </div>
@@ -122,86 +120,106 @@ export function ProblemBasicInfo({
           }}
         </form.Field>
 
+        {/* Select Fields */}
         <div className="grid gap-6 md:grid-cols-3">
-          {/* Type */}
+          {/* Problem Type */}
           <form.Field name="type">
-            {(field) => (
-              <div className="space-y-2">
-                <Label>
-                  Problem Type
-                </Label>
+            {(field) => {
+              const error = field.state.meta.errors[0];
 
-                <Select
-                  value={field.state.value}
-                  disabled={disabled}
-                  onValueChange={(value) =>
-                    field.handleChange(
-                      value as ProblemType,
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
+              return (
+                <div className="space-y-2">
+                  <Label>Problem Type</Label>
 
-                  <SelectContent>
-                    <SelectItem value="MCQ">
-                      Multiple Choice
-                    </SelectItem>
+                  <Select
+                    value={field.state.value}
+                    disabled={disabled}
+                    onValueChange={(value) =>
+                      field.handleChange(
+                        value as ProblemType,
+                      )
+                    }
+                  >
+                    <SelectTrigger
+                      aria-invalid={Boolean(error)}
+                    >
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
 
-                    <SelectItem value="WRITTEN">
-                      Written
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                    <SelectContent>
+                      <SelectItem value="MCQ">
+                        Multiple Choice
+                      </SelectItem>
+
+                      <SelectItem value="WRITTEN">
+                        Written
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {error && (
+                    <p className="text-sm text-destructive">
+                      {String(error)}
+                    </p>
+                  )}
+                </div>
+              );
+            }}
           </form.Field>
 
           {/* Difficulty */}
           <form.Field name="difficulty">
-            {(field) => (
-              <div className="space-y-2">
-                <Label>
-                  Difficulty
-                </Label>
+            {(field) => {
+              const error = field.state.meta.errors[0];
 
-                <Select
-                  value={field.state.value}
-                  disabled={disabled}
-                  onValueChange={(value) =>
-                    field.handleChange(
-                      value as ProblemDifficulty,
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
+              return (
+                <div className="space-y-2">
+                  <Label>Difficulty</Label>
 
-                  <SelectContent>
-                    <SelectItem value="EASY">
-                      Easy
-                    </SelectItem>
+                  <Select
+                    value={field.state.value}
+                    disabled={disabled}
+                    onValueChange={(value) =>
+                      field.handleChange(
+                        value as ProblemDifficulty,
+                      )
+                    }
+                  >
+                    <SelectTrigger
+                      aria-invalid={Boolean(error)}
+                    >
+                      <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
 
-                    <SelectItem value="MEDIUM">
-                      Medium
-                    </SelectItem>
+                    <SelectContent>
+                      <SelectItem value="EASY">
+                        Easy
+                      </SelectItem>
 
-                    <SelectItem value="HARD">
-                      Hard
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                      <SelectItem value="MEDIUM">
+                        Medium
+                      </SelectItem>
+
+                      <SelectItem value="HARD">
+                        Hard
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {error && (
+                    <p className="text-sm text-destructive">
+                      {String(error)}
+                    </p>
+                  )}
+                </div>
+              );
+            }}
           </form.Field>
 
           {/* Points */}
           <form.Field name="points">
             {(field) => {
-              const error =
-                field.state.meta.errors[0];
+              const error = field.state.meta.errors[0];
 
               return (
                 <div className="space-y-2">
@@ -218,16 +236,15 @@ export function ProblemBasicInfo({
                     onBlur={field.handleBlur}
                     onChange={(event) =>
                       field.handleChange(
-                        Number(
-                          event.target.value,
-                        ),
+                        Number(event.target.value),
                       )
                     }
+                    aria-invalid={Boolean(error)}
                   />
 
                   {error && (
                     <p className="text-sm text-destructive">
-                      {error}
+                      {String(error)}
                     </p>
                   )}
                 </div>

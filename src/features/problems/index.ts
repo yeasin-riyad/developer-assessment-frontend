@@ -32,3 +32,12 @@ export { WrittenProblemSection } from "./components/written-problem-section";
 export { ProblemCard } from "./components/problem-card";
 
 export { ProblemList } from "./components/problem-list";
+
+export { ProblemPageActions } from "./components/problem-page-actions";
+
+export * from "./api";
+export * from "./hooks";
+export * from "./schemas";
+export * from "./types";
+
+export * from "./components/problem-details/problem-details";

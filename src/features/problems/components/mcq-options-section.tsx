@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
+import type { FormApi } from "@tanstack/react-form";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,10 @@ import {
   RadioGroupItem,
 } from "@/components/ui/radio-group";
 
+import type { CreateProblemFormValues } from "@/features/problems";
+
 interface MCQOptionsSectionProps {
-  form: ReturnType<typeof useForm>;
+  form: FormApi<CreateProblemFormValues>;
   disabled: boolean;
 }
 
@@ -29,88 +31,75 @@ export function MCQOptionsSection({
 }: MCQOptionsSectionProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base">
           Answer Options
         </CardTitle>
 
         <CardDescription>
-          Add exactly four options and select
-          exactly one correct answer.
+          Enter four options and select the correct answer.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <form.Field name="options">
           {(field) => {
-            const options =
-              field.state.value ?? [];
+            const options = field.state.value ?? [];
+            const error = field.state.meta.errors[0];
 
-            const error =
-              field.state.meta.errors[0];
+            const correctIndex = options.findIndex(
+              (option) => option.isCorrect,
+            );
 
             return (
-              <div className="space-y-4">
-                {options.map(
-                  (option, index) => (
+              <div className="space-y-3">
+                <RadioGroup
+                  value={
+                    correctIndex >= 0
+                      ? String(correctIndex)
+                      : undefined
+                  }
+                  onValueChange={(value) => {
+                    const selectedIndex = Number(value);
+
+                    field.handleChange(
+                      options.map((option, index) => ({
+                        ...option,
+                        isCorrect:
+                          index === selectedIndex,
+                      })),
+                    );
+                  }}
+                  disabled={disabled}
+                  className="space-y-3"
+                >
+                  {options.map((option, index) => (
                     <div
                       key={index}
-                      className="rounded-lg border p-4"
+                      className="rounded-md border bg-background px-3 py-2.5"
                     >
-                      <div className="flex items-start gap-4">
-                        {/* Correct Answer */}
-                        <RadioGroup
-                          value={
-                            option.isCorrect
-                              ? String(index)
-                              : ""
-                          }
-                          onValueChange={() => {
-                            field.handleChange(
-                              options.map(
-                                (
-                                  current,
-                                  currentIndex,
-                                ) => ({
-                                  ...current,
-                                  isCorrect:
-                                    currentIndex ===
-                                    index,
-                                }),
-                              ),
-                            );
-                          }}
-                          disabled={disabled}
-                          className="pt-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value={String(index)}
-                              id={`correct-${index}`}
-                            />
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem
+                          value={String(index)}
+                          id={`correct-${index}`}
+                        />
 
-                            <Label
-                              htmlFor={`correct-${index}`}
-                              className="text-xs text-muted-foreground"
-                            >
-                              Correct
-                            </Label>
-                          </div>
-                        </RadioGroup>
+                        <span className="w-5 shrink-0 text-sm font-semibold text-muted-foreground">
+                          {String.fromCharCode(65 + index)}
+                        </span>
 
-                        {/* Option Text */}
-                        <div className="flex-1 space-y-2">
+                        <div className="min-w-0 flex-1">
                           <Label
                             htmlFor={`option-${index}`}
+                            className="sr-only"
                           >
                             Option {index + 1}
                           </Label>
 
                           <Input
                             id={`option-${index}`}
-                            placeholder={`Enter option ${
-                              index + 1
-                            }`}
+                            type="text"
+                            placeholder={`Enter option ${index + 1}`}
                             value={option.text}
                             disabled={disabled}
                             onChange={(event) => {
@@ -120,28 +109,36 @@ export function MCQOptionsSection({
                                     current,
                                     currentIndex,
                                   ) =>
-                                    currentIndex ===
-                                    index
+                                    currentIndex === index
                                       ? {
                                           ...current,
-                                          text: event
-                                            .target
+                                          text: event.target
                                             .value,
                                         }
                                       : current,
                                 ),
                               );
                             }}
+                            className="h-9 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                            aria-invalid={Boolean(
+                              error,
+                            )}
                           />
                         </div>
+
+                        {option.isCorrect && (
+                          <span className="shrink-0 text-xs font-medium text-primary">
+                            Correct
+                          </span>
+                        )}
                       </div>
                     </div>
-                  ),
-                )}
+                  ))}
+                </RadioGroup>
 
                 {error && (
                   <p className="text-sm text-destructive">
-                    {error}
+                    {String(error)}
                   </p>
                 )}
               </div>
