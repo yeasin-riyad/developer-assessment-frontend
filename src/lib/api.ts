@@ -18,6 +18,32 @@ type ApiOptions = FetchOptions<"json"> & {
   _retry?: boolean;
 };
 
+export interface ApiErrorResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data?: unknown;
+}
+
+export class ApiError extends Error {
+  statusCode: number;
+  data?: unknown;
+
+  constructor(
+    message: string,
+    statusCode: number,
+    data?: unknown,
+  ) {
+    super(message);
+
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+    this.data = data;
+
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 const rawApi = ofetch.create({
   baseURL: API_URL,
   credentials: "include",
@@ -106,7 +132,8 @@ async function request<T>(
           ).response?.status
         : undefined;
 
-    const alreadyRetried = options._retry === true;
+    const alreadyRetried =
+      options._retry === true;
 
     const isRefreshRequest =
       url === "/auth/refresh-token";
@@ -116,7 +143,21 @@ async function request<T>(
       alreadyRetried ||
       isRefreshRequest
     ) {
-      throw error;
+      const fetchError = error as {
+        response?: {
+          status?: number;
+        };
+        data?: ApiErrorResponse;
+      };
+
+      throw new ApiError(
+        fetchError.data?.message ??
+          "Something went wrong. Please try again.",
+        fetchError.data?.statusCode ??
+          fetchError.response?.status ??
+          500,
+        fetchError.data?.data,
+      );
     }
 
     const newAccessToken =
@@ -135,11 +176,29 @@ async function request<T>(
       `Bearer ${newAccessToken}`,
     );
 
-    return rawApi<T>(url, {
-      ...options,
-      retry: 6,
-      headers: retryHeaders,
-    });
+    try {
+      return await rawApi<T>(url, {
+        ...options,
+        retry: 6,
+        headers: retryHeaders,
+      });
+    } catch (error: unknown) {
+      const fetchError = error as {
+        response?: {
+          status?: number;
+        };
+        data?: ApiErrorResponse;
+      };
+
+      throw new ApiError(
+        fetchError.data?.message ??
+          "Something went wrong. Please try again.",
+        fetchError.data?.statusCode ??
+          fetchError.response?.status ??
+          500,
+        fetchError.data?.data,
+      );
+    }
   }
 }
 
