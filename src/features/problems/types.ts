@@ -10,6 +10,14 @@ export enum ProblemDifficulty {
   HARD = "HARD",
 }
 
+export interface ProblemQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: "MCQ" | "WRITTEN";
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+}
+
 export interface ProblemOption {
   id: string;
   text: string;
@@ -55,6 +63,15 @@ export interface CreateProblemOption {
   isCorrect: boolean;
 }
 
+export interface ProblemPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface CreateProblemTestCase {
   input: string;
   expectedOutput: string;
@@ -82,6 +99,7 @@ export interface GetProblemsResponse {
   statusCode: number;
   message: string;
   data: Problem[];
+  pagination: ProblemPagination;
 }
 
 export interface GetProblemResponse {

@@ -16,9 +16,16 @@ export async function createProblem(
   });
 }
 
-export async function getProblems(): Promise<GetProblemsResponse> {
+import type {
+  ProblemQueryParams,
+} from "./types";
+
+export async function getProblems(
+  params?: ProblemQueryParams,
+): Promise<GetProblemsResponse> {
   return api<GetProblemsResponse>("/problems", {
     method: "GET",
+    query: params,
   });
 }
 

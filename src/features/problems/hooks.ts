@@ -12,6 +12,7 @@ import {
 
 import type {
   CreateProblemPayload,
+  ProblemQueryParams,
 } from "./types";
 
 export const problemQueryKeys = {
@@ -20,8 +21,11 @@ export const problemQueryKeys = {
   lists: () =>
     [...problemQueryKeys.all, "list"] as const,
 
-  list: () =>
-    [...problemQueryKeys.lists()] as const,
+  list: (params?: ProblemQueryParams) =>
+    [
+      ...problemQueryKeys.lists(),
+      params,
+    ] as const,
 
   details: () =>
     [...problemQueryKeys.all, "detail"] as const,
@@ -33,10 +37,12 @@ export const problemQueryKeys = {
     ] as const,
 };
 
-export function useProblems() {
+export function useProblems(
+  params?: ProblemQueryParams,
+) {
   return useQuery({
-    queryKey: problemQueryKeys.list(),
-    queryFn: getProblems,
+    queryKey: problemQueryKeys.list(params),
+    queryFn: () => getProblems(params),
   });
 }
 
