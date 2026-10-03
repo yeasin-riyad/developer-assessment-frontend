@@ -11,6 +11,7 @@ import type {
   PublishAssessmentResponse,
   UpdateAssessmentPayload,
 } from "./types";
+import { GetProblemsResponse } from "../problems";
 
 export async function createAssessment(
   payload: CreateAssessmentPayload,
@@ -96,4 +97,13 @@ export async function unpublishAssessment(
       method: "PATCH",
     },
   );
+}
+
+
+
+
+export async function getProblems(): Promise<GetProblemsResponse> {
+  return api<GetProblemsResponse>("/problems", {
+    method: "GET",
+  });
 }

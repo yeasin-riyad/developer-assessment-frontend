@@ -1,11 +1,15 @@
-import React from 'react'
+import { AssessmentDetails } from "@/features/assessments/components/assessment-details/assessment-details";
 
-const assessmentId = () => {
-  return (
-    <div>
-      Assessment Id Page
-    </div>
-  )
+interface AssessmentDetailsPageProps {
+  params: Promise<{
+    assessmentId: string;
+  }>;
 }
 
-export default assessmentId
+export default async function AssessmentDetailsPage({
+  params,
+}: AssessmentDetailsPageProps) {
+  const { assessmentId } = await params;
+
+  return <AssessmentDetails assessmentId={assessmentId} />;
+}
