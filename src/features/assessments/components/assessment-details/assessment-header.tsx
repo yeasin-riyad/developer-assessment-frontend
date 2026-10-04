@@ -1,18 +1,25 @@
 "use client";
 
-import { ArrowLeft, Edit } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit,
+  UserPlus,
+} from "lucide-react";
+
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 import { AssessmentActions } from "../assessment-actions";
 
+import { InviteCandidateDialog } from "@/features/invitations/components/invite-candidate-dialog";
 
 interface AssessmentHeaderProps {
   assessment: {
     id: string;
     title: string;
-    description?: string;
+    description?: string | null;
     status: string;
   };
 }
@@ -26,7 +33,7 @@ export function AssessmentHeader({
         <div className="space-y-2">
           <Link
             href="/assessments"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
             Back to assessments
@@ -50,14 +57,34 @@ export function AssessmentHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Link href={`/assessments/${assessment.id}/edit`}>
-              <Edit className="mr-2 size-4" />
-              Edit
-            </Link>
-          </Button>
+          {assessment.status === "DRAFT" && (
+            <Button
+              variant="outline"
+              asChild
+            >
+              <Link
+                href={`/assessments/${assessment.id}/edit`}
+              >
+                <Edit className="mr-2 size-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
 
-          <AssessmentActions assessment={assessment} />
+          {assessment.status === "PUBLISHED" && (
+            <InviteCandidateDialog
+              assessmentId={assessment.id}
+            >
+              <Button>
+                <UserPlus className="mr-2 size-4" />
+                Invite Candidate
+              </Button>
+            </InviteCandidateDialog>
+          )}
+
+          <AssessmentActions
+            assessment={assessment}
+          />
         </div>
       </div>
     </div>

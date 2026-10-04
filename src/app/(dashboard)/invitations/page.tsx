@@ -1,11 +1,19 @@
-import React from 'react'
+import { InvitationList } from "@/features/invitations/components/invitation-list";
 
-const invitationPage = () => {
+export default function InvitationsPage() {
   return (
-    <div>
-      invitationPage
-    </div>
-  )
-}
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Invitations
+        </h1>
 
-export default invitationPage
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage candidate invitations sent by you.
+        </p>
+      </div>
+
+      <InvitationList />
+    </div>
+  );
+}
