@@ -16,6 +16,17 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import {
   useAttempt,
@@ -457,34 +468,62 @@ if (
               </button>
 
               {isLastQuestion ? (
-                <button
-                  type="button"
-                  disabled={submitMutation.isPending}
-                  onClick={() => {
-                    const confirmed =
-                      window.confirm(
-                        "Are you sure you want to submit your assessment?",
-                      );
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <button
+        type="button"
+        disabled={submitMutation.isPending}
+        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {submitMutation.isPending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Submitting...
+          </>
+        ) : (
+          <>
+            <Send className="size-4" />
+            Submit Assessment
+          </>
+        )}
+      </button>
+    </AlertDialogTrigger>
 
-                    if (confirmed) {
-                      handleSubmit();
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {submitMutation.isPending ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="size-4" />
-                      Submit Assessment
-                    </>
-                  )}
-                </button>
-              ) : (
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>
+          Submit your assessment?
+        </AlertDialogTitle>
+
+        <AlertDialogDescription>
+          Are you sure you want to submit your assessment?
+          Once submitted, you will not be able to change
+          your answers.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+
+      <AlertDialogFooter>
+        <AlertDialogCancel>
+          Cancel
+        </AlertDialogCancel>
+
+        <AlertDialogAction
+          onClick={handleSubmit}
+          disabled={submitMutation.isPending}
+        >
+          {submitMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            "Yes, Submit"
+          )}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+) : (
                 <button
                   type="button"
                   onClick={() =>

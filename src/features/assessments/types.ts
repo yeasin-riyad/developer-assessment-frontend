@@ -106,3 +106,30 @@ export interface PublishAssessmentResponse {
   message: string;
   data: Assessment;
 }
+
+
+export type CandidateAssessmentStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "SUBMITTED"
+  | "EXPIRED";
+
+export interface CandidateAssessment {
+  attemptId: string;
+
+  assessment: {
+    id: string;
+    title: string;
+    duration: number;
+    totalMarks: number;
+    status: string;
+  };
+
+  status: CandidateAssessmentStatus;
+
+  startedAt: string | null;
+  expiresAt: string | null;
+  submittedAt: string | null;
+
+  answeredQuestions: number;
+}

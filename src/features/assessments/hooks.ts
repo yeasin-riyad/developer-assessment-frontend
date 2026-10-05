@@ -9,6 +9,7 @@ import {
   createAssessment,
   getAssessmentById,
   getAssessments,
+  getMyCandidateAssessments,
   publishAssessment,
   removeProblemFromAssessment,
   unpublishAssessment,
@@ -21,29 +22,36 @@ import type {
   UpdateAssessmentPayload,
 } from "./types";
 
+/**
+ * Assessment query keys
+ */
 export const assessmentQueryKeys = {
   all: ["assessments"] as const,
 
-  lists: () => [
-    ...assessmentQueryKeys.all,
-    "list",
-  ] as const,
+  lists: () =>
+    [...assessmentQueryKeys.all, "list"] as const,
 
-  list: () => [
-    ...assessmentQueryKeys.lists(),
-  ] as const,
+  list: () =>
+    [...assessmentQueryKeys.lists()] as const,
 
-  details: () => [
-    ...assessmentQueryKeys.all,
-    "detail",
-  ] as const,
+  details: () =>
+    [...assessmentQueryKeys.all, "detail"] as const,
 
-  detail: (assessmentId: string) => [
-    ...assessmentQueryKeys.details(),
-    assessmentId,
-  ] as const,
+  detail: (assessmentId: string) =>
+    [
+      ...assessmentQueryKeys.details(),
+      assessmentId,
+    ] as const,
+
+  candidate: () =>
+    [...assessmentQueryKeys.all, "candidate"] as const,
 };
 
+/**
+ * Get all assessments.
+ *
+ * Recruiter / Creator / Evaluator
+ */
 export function useAssessments() {
   return useQuery({
     queryKey: assessmentQueryKeys.list(),
@@ -51,31 +59,65 @@ export function useAssessments() {
   });
 }
 
-export function useAssessment(assessmentId: string) {
+/**
+ * Get a single assessment.
+ */
+export function useAssessment(
+  assessmentId: string,
+) {
   return useQuery({
-    queryKey: assessmentQueryKeys.detail(assessmentId),
-    queryFn: () => getAssessmentById(assessmentId),
+    queryKey:
+      assessmentQueryKeys.detail(assessmentId),
+
+    queryFn: () =>
+      getAssessmentById(assessmentId),
+
     enabled: Boolean(assessmentId),
   });
 }
 
+/**
+ * Get assessments assigned to the
+ * currently logged-in candidate.
+ */
+export function useMyCandidateAssessments() {
+  return useQuery({
+    queryKey:
+      assessmentQueryKeys.candidate(),
+
+    queryFn: getMyCandidateAssessments,
+
+    enabled: true,
+  });
+}
+
+/**
+ * Create assessment.
+ */
 export function useCreateAssessment() {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateAssessmentPayload) =>
-      createAssessment(payload),
+    mutationFn: (
+      payload: CreateAssessmentPayload,
+    ) => createAssessment(payload),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.lists(),
+        queryKey:
+          assessmentQueryKeys.lists(),
       });
     },
   });
 }
 
+/**
+ * Update assessment.
+ */
 export function useUpdateAssessment() {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: ({
@@ -84,24 +126,34 @@ export function useUpdateAssessment() {
     }: {
       assessmentId: string;
       payload: UpdateAssessmentPayload;
-    }) => updateAssessment(assessmentId, payload),
+    }) =>
+      updateAssessment(
+        assessmentId,
+        payload,
+      ),
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.detail(
-          variables.assessmentId,
-        ),
+        queryKey:
+          assessmentQueryKeys.detail(
+            variables.assessmentId,
+          ),
       });
 
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.lists(),
+        queryKey:
+          assessmentQueryKeys.lists(),
       });
     },
   });
 }
 
+/**
+ * Add problem to assessment.
+ */
 export function useAddProblemToAssessment() {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: ({
@@ -118,20 +170,26 @@ export function useAddProblemToAssessment() {
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.detail(
-          variables.assessmentId,
-        ),
+        queryKey:
+          assessmentQueryKeys.detail(
+            variables.assessmentId,
+          ),
       });
 
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.lists(),
+        queryKey:
+          assessmentQueryKeys.lists(),
       });
     },
   });
 }
 
+/**
+ * Remove problem from assessment.
+ */
 export function useRemoveProblemFromAssessment() {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
     mutationFn: ({
@@ -148,55 +206,72 @@ export function useRemoveProblemFromAssessment() {
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.detail(
-          variables.assessmentId,
-        ),
+        queryKey:
+          assessmentQueryKeys.detail(
+            variables.assessmentId,
+          ),
       });
 
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.lists(),
+        queryKey:
+          assessmentQueryKeys.lists(),
       });
     },
   });
 }
 
+/**
+ * Publish assessment.
+ */
 export function usePublishAssessment() {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
-    mutationFn: (assessmentId: string) =>
-      publishAssessment(assessmentId),
+    mutationFn: (
+      assessmentId: string,
+    ) => publishAssessment(assessmentId),
 
     onSuccess: (_, assessmentId) => {
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.detail(
-          assessmentId,
-        ),
+        queryKey:
+          assessmentQueryKeys.detail(
+            assessmentId,
+          ),
       });
 
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.lists(),
+        queryKey:
+          assessmentQueryKeys.lists(),
       });
     },
   });
 }
 
+/**
+ * Unpublish assessment.
+ */
 export function useUnpublishAssessment() {
-  const queryClient = useQueryClient();
+  const queryClient =
+    useQueryClient();
 
   return useMutation({
-    mutationFn: (assessmentId: string) =>
+    mutationFn: (
+      assessmentId: string,
+    ) =>
       unpublishAssessment(assessmentId),
 
     onSuccess: (_, assessmentId) => {
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.detail(
-          assessmentId,
-        ),
+        queryKey:
+          assessmentQueryKeys.detail(
+            assessmentId,
+          ),
       });
 
       queryClient.invalidateQueries({
-        queryKey: assessmentQueryKeys.lists(),
+        queryKey:
+          assessmentQueryKeys.lists(),
       });
     },
   });

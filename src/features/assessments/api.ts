@@ -3,6 +3,7 @@ import api from "@/lib/api";
 import type {
   AddProblemPayload,
   AddProblemResponse,
+  CandidateAssessment,
   CreateAssessmentPayload,
   CreateAssessmentResponse,
   DeleteProblemResponse,
@@ -106,4 +107,26 @@ export async function getProblems(): Promise<GetProblemsResponse> {
   return api<GetProblemsResponse>("/problems", {
     method: "GET",
   });
+}
+
+
+
+
+interface ApiResponse<T> {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: T;
+}
+
+export async function getMyCandidateAssessments(): Promise<
+  CandidateAssessment[]
+> {
+  const response = await api<
+    ApiResponse<CandidateAssessment[]>
+  >("/assessments/my", {
+    method: "GET",
+  });
+
+  return response.data;
 }
