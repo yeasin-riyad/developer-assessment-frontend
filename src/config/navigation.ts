@@ -36,6 +36,15 @@ export const dashboardNavigation: NavigationItem[] = [
     ],
   },
 
+    {
+    title: "Invitations",
+    href: "/invitations/my",
+    icon: LayoutDashboard,
+    roles: [
+      UserRole.CANDIDATE,
+    ],
+  },
+
   {
     title: "Assessments",
     href: "/assessments",

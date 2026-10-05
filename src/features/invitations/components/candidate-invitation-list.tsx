@@ -1,5 +1,6 @@
 
 "use client";
+import { useRouter } from "next/navigation";
 
 import {
   useState,
@@ -100,34 +101,41 @@ function CandidateInvitationCard({
   const isPending =
     isAccepting || isDeclining;
 
+    const router = useRouter();
+
   /**
    * Accept invitation.
    */
-  const handleAccept = () => {
-    acceptMutation.mutate(invitation.id, {
-      onSuccess: (response) => {
-        toast.success(
-          "Invitation accepted successfully!",
-          {
-            description:
-              `You are now ready to take "${invitation.assessment.title}".`,
-            duration: 4000,
-          },
-        );
-      },
+const handleAccept = () => {
+  acceptMutation.mutate(invitation.id, {
+    onSuccess: (response) => {
+      toast.success(
+        "Invitation accepted successfully!",
+        {
+          description: `You are now ready to take "${invitation.assessment.title}".`,
+          duration: 4000,
+        },
+      );
 
-      onError: (error) => {
-        toast.error(
-          "Failed to accept invitation",
-          {
-            description:
-              getErrorMessage(error),
-            duration: 5000,
-          },
-        );
-      },
-    });
-  };
+      const attemptId = response.data.attempt.id;
+      const assessmentId = response.data.invitation.assessmentId;
+
+      router.push(
+        `/assessments/${assessmentId}/attempt/${attemptId}`,
+      );
+    },
+
+    onError: (error) => {
+      toast.error(
+        "Failed to accept invitation",
+        {
+          description: getErrorMessage(error),
+          duration: 5000,
+        },
+      );
+    },
+  });
+};
 
   /**
    * Decline invitation.
