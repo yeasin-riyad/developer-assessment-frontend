@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -39,6 +39,8 @@ import type {
   AttemptStatusValue,
 } from "../types";
 import { AttemptTimer } from "./attempt-timer";
+import { useQueryClient } from "@tanstack/react-query";
+import { assessmentQueryKeys } from "@/features/assessments";
 
 interface AttemptPageProps {
   attemptId: string;
@@ -118,42 +120,63 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
   /**
    * Submit assessment.
    */
-  const handleSubmit = useCallback(
-    (automatic = false) => {
-      if (submitted || submitMutation.isPending) {
-        return;
-      }
+  const router = useRouter();
+  const queryClient = useQueryClient();
+/**
+ * Submit assessment.
+ */
+const handleSubmit = useCallback(
+  (automatic = false) => {
+    if (submitted || submitMutation.isPending) {
+      return;
+    }
 
-      submitMutation.mutate(attemptId, {
-        onSuccess: (result) => {
-          setSubmitted(true);
+    submitMutation.mutate(attemptId, {
+      onSuccess: async (result) => {
+        setSubmitted(true);
 
-          if (result.status === "EXPIRED") {
-            toast.warning("Time expired", {
-              description: "Your assessment has been submitted as expired.",
-            });
-          } else {
-            toast.success(
-              automatic
-                ? "Assessment submitted automatically"
-                : "Assessment submitted successfully",
-              {
-                description: "Your responses have been recorded.",
-              },
-            );
-          }
-        },
-        onError: (error) => {
-          toast.error("Unable to submit assessment", {
-            description:
-              error instanceof Error ? error.message : "Something went wrong.",
+        if (result.status === "EXPIRED") {
+          toast.warning("Time expired", {
+            description: "Your assessment has been submitted as expired.",
           });
-        },
-      });
-    },
-    [attemptId, submitMutation, submitted],
-  );
+        } else {
+          toast.success(
+            automatic
+              ? "Assessment submitted automatically"
+              : "Assessment submitted successfully",
+            {
+              description: "Your responses have been recorded.",
+            },
+          );
+        }
 
+        // Refetch candidate assessments
+        await queryClient.invalidateQueries({
+          queryKey: assessmentQueryKeys.candidate(),
+        });
+
+        // Navigate to result page
+        router.push(`/assessments/attempts/${attemptId}/result`);
+      },
+
+      onError: (error) => {
+        toast.error("Unable to submit assessment", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "Something went wrong.",
+        });
+      },
+    });
+  },
+  [
+    attemptId,
+    submitMutation,
+    submitted,
+    queryClient,
+    router,
+  ],
+);
   /**
    * Timer expiry.
    */

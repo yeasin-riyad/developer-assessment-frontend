@@ -231,7 +231,9 @@ export function InviteCandidateDialog({
   const createInvitationMutation =
     useCreateInvitation();
 
-  const candidates = data?.data ?? [];
+
+  const candidates = data?.data?.candidates ?? [];
+ 
 
  
   useEffect(() => {
@@ -320,7 +322,7 @@ export function InviteCandidateDialog({
       {
         onSuccess: () => {
           toast.success(
-            "Invitation sent successfully!",
+            "Invitation Email sent successfully!",
             {
               description: `${selectedCandidate.name} has been invited to this assessment.`,
               duration: 4000,
@@ -507,7 +509,7 @@ export function InviteCandidateDialog({
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {candidates.map(
+                    {candidates?.map(
                       (candidate) => {
                         const isSelected =
                           selectedCandidate?.id ===
