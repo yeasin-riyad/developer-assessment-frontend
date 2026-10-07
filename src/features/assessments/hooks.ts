@@ -152,8 +152,7 @@ export function useUpdateAssessment() {
  * Add problem to assessment.
  */
 export function useAddProblemToAssessment() {
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
@@ -162,23 +161,37 @@ export function useAddProblemToAssessment() {
     }: {
       assessmentId: string;
       payload: AddProblemPayload;
-    }) =>
-      addProblemToAssessment(
+    }) => {
+      console.log("🚀 MUTATION FUNCTION CALLED");
+
+      return addProblemToAssessment(
         assessmentId,
         payload,
-      ),
+      );
+    },
 
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      console.log("✅ HOOK SUCCESS", data);
+
       queryClient.invalidateQueries({
-        queryKey:
-          assessmentQueryKeys.detail(
-            variables.assessmentId,
-          ),
+        queryKey: assessmentQueryKeys.detail(
+          variables.assessmentId,
+        ),
       });
 
       queryClient.invalidateQueries({
-        queryKey:
-          assessmentQueryKeys.lists(),
+        queryKey: assessmentQueryKeys.lists(),
+      });
+    },
+
+    onError: (error) => {
+      console.error("❌ HOOK ERROR", error);
+    },
+
+    onSettled: (data, error) => {
+      console.log("🏁 HOOK SETTLED", {
+        data,
+        error,
       });
     },
   });

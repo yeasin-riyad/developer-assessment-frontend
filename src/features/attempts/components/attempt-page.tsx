@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -46,9 +44,7 @@ interface AttemptPageProps {
   attemptId: string;
 }
 
-export function AttemptPage({
-  attemptId,
-}: AttemptPageProps) {
+export function AttemptPage({ attemptId }: AttemptPageProps) {
   const attemptQuery = useAttempt(attemptId);
 
   const attempt = attemptQuery.data;
@@ -62,16 +58,11 @@ export function AttemptPage({
   const saveAnswerMutation = useSaveAnswer();
   const submitMutation = useSubmitAttempt();
 
-  const [currentQuestionIndex, setCurrentQuestionIndex] =
-    useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  const [answers, setAnswers] = useState<
-    Record<string, string>
-  >({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  const [savingProblemId, setSavingProblemId] = useState<
-    string | null
-  >(null);
+  const [savingProblemId, setSavingProblemId] = useState<string | null>(null);
 
   const [submitted, setSubmitted] = useState(false);
 
@@ -83,12 +74,13 @@ export function AttemptPage({
       return;
     }
 
-    const serverAnswers = attempt.answers.reduce<
-      Record<string, string>
-    >((accumulator, answer) => {
-      accumulator[answer.problemId] = answer.answer;
-      return accumulator;
-    }, {});
+    const serverAnswers = attempt.answers.reduce<Record<string, string>>(
+      (accumulator, answer) => {
+        accumulator[answer.problemId] = answer.answer;
+        return accumulator;
+      },
+      {},
+    );
 
     setAnswers(serverAnswers);
   }, [attempt?.answers]);
@@ -111,16 +103,13 @@ export function AttemptPage({
     startMutation.mutate(attemptId, {
       onSuccess: () => {
         toast.success("Assessment started", {
-          description:
-            "Your timer has started. Good luck!",
+          description: "Your timer has started. Good luck!",
         });
       },
       onError: (error) => {
         toast.error("Unable to start assessment", {
           description:
-            error instanceof Error
-              ? error.message
-              : "Something went wrong.",
+            error instanceof Error ? error.message : "Something went wrong.",
         });
       },
     });
@@ -141,8 +130,7 @@ export function AttemptPage({
 
           if (result.status === "EXPIRED") {
             toast.warning("Time expired", {
-              description:
-                "Your assessment has been submitted as expired.",
+              description: "Your assessment has been submitted as expired.",
             });
           } else {
             toast.success(
@@ -150,8 +138,7 @@ export function AttemptPage({
                 ? "Assessment submitted automatically"
                 : "Assessment submitted successfully",
               {
-                description:
-                  "Your responses have been recorded.",
+                description: "Your responses have been recorded.",
               },
             );
           }
@@ -159,18 +146,12 @@ export function AttemptPage({
         onError: (error) => {
           toast.error("Unable to submit assessment", {
             description:
-              error instanceof Error
-                ? error.message
-                : "Something went wrong.",
+              error instanceof Error ? error.message : "Something went wrong.",
           });
         },
       });
     },
-    [
-      attemptId,
-      submitMutation,
-      submitted,
-    ],
+    [attemptId, submitMutation, submitted],
   );
 
   /**
@@ -184,20 +165,22 @@ export function AttemptPage({
     ) {
       handleSubmit(true);
     }
-  }, [
-    attempt?.status,
-    handleSubmit,
-    submitted,
-    submitMutation.isPending,
-  ]);
+  }, [attempt?.status, handleSubmit, submitted, submitMutation.isPending]);
 
   /**
    * Save answer.
    */
-  const handleAnswerChange = (
-    problem: AssessmentProblem,
-    answer: string,
-  ) => {
+  const handleAnswerChange = (problem: AssessmentProblem, answer: string) => {
+    /*
+     * Once an answer has been selected,
+     * the candidate cannot change it.
+     */
+    const existingAnswer = answers[problem.problemId];
+
+    if (existingAnswer) {
+      return;
+    }
+
     setAnswers((previous) => ({
       ...previous,
       [problem.problemId]: answer,
@@ -217,14 +200,26 @@ export function AttemptPage({
         onSuccess: () => {
           setSavingProblemId(null);
         },
+
         onError: (error) => {
+          /*
+           * Important:
+           * If saving fails, remove the local answer
+           * so the candidate can try again.
+           */
+          setAnswers((previous) => {
+            const updated = { ...previous };
+
+            delete updated[problem.problemId];
+
+            return updated;
+          });
+
           setSavingProblemId(null);
 
           toast.error("Failed to save answer", {
             description:
-              error instanceof Error
-                ? error.message
-                : "Please try again.",
+              error instanceof Error ? error.message : "Please try again.",
           });
         },
       },
@@ -256,16 +251,11 @@ export function AttemptPage({
   /**
    * Submitted state.
    */
-  if (
-    attempt.status === "SUBMITTED" ||
-    submitted
-  ) {
+  if (attempt.status === "SUBMITTED" || submitted) {
     return (
       <AttemptFinished
         status="SUBMITTED"
-        assessmentTitle={
-          attempt.assessment?.title ?? "Assessment"
-        }
+        assessmentTitle={attempt.assessment?.title ?? "Assessment"}
       />
     );
   }
@@ -277,9 +267,7 @@ export function AttemptPage({
     return (
       <AttemptFinished
         status="EXPIRED"
-        assessmentTitle={
-          attempt.assessment?.title ?? "Assessment"
-        }
+        assessmentTitle={attempt.assessment?.title ?? "Assessment"}
       />
     );
   }
@@ -309,51 +297,39 @@ export function AttemptPage({
   /**
    * Questions error.
    */
-if (
-  questionsQuery.isError ||
-  !questionsQuery.data
-) {
-  console.error(
-    "Attempt questions error:",
-    questionsQuery.error,
-  );
+  if (questionsQuery.isError || !questionsQuery.data) {
+    console.error("Attempt questions error:", questionsQuery.error);
 
-  return (
-    <AttemptError
-      message={
-        questionsQuery.error
-          ? String(
-              questionsQuery.error instanceof Error
-                ? questionsQuery.error.message
-                : questionsQuery.error,
-            )
-          : "Unable to load assessment questions."
-      }
-    />
-  );
-}
-
-  if (!currentProblem) {
     return (
       <AttemptError
-        message="No questions are available for this assessment."
+        message={
+          questionsQuery.error
+            ? String(
+                questionsQuery.error instanceof Error
+                  ? questionsQuery.error.message
+                  : questionsQuery.error,
+              )
+            : "Unable to load assessment questions."
+        }
       />
     );
   }
 
-  const selectedAnswer =
-    answers[currentProblem.problemId] ?? "";
+  if (!currentProblem) {
+    return (
+      <AttemptError message="No questions are available for this assessment." />
+    );
+  }
 
-  const answeredCount = problems.filter(
-    (problem) =>
-      Boolean(answers[problem.problemId]?.trim()),
+  const selectedAnswer = answers[currentProblem.problemId] ?? "";
+
+  const answeredCount = problems.filter((problem) =>
+    Boolean(answers[problem.problemId]?.trim()),
   ).length;
 
-  const isFirstQuestion =
-    currentQuestionIndex === 0;
+  const isFirstQuestion = currentQuestionIndex === 0;
 
-  const isLastQuestion =
-    currentQuestionIndex === problems.length - 1;
+  const isLastQuestion = currentQuestionIndex === problems.length - 1;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -362,13 +338,11 @@ if (
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="min-w-0">
             <h1 className="truncate text-lg font-semibold text-slate-900">
-              {attempt.assessment?.title ??
-                "Assessment"}
+              {attempt.assessment?.title ?? "Assessment"}
             </h1>
 
             <p className="text-sm text-slate-500">
-              Question {currentQuestionIndex + 1} of{" "}
-              {problems.length}
+              Question {currentQuestionIndex + 1} of {problems.length}
             </p>
           </div>
 
@@ -412,36 +386,28 @@ if (
                 <MCQAnswer
                   problem={currentProblem}
                   value={selectedAnswer}
-                  disabled={saveAnswerMutation.isPending}
+                  disabled={savingProblemId === currentProblem.problemId}
                   onChange={(answer) =>
-                    handleAnswerChange(
-                      currentProblem,
-                      answer,
-                    )
+                    handleAnswerChange(currentProblem, answer)
                   }
                 />
               ) : (
                 <WrittenAnswer
                   value={selectedAnswer}
                   onChange={(answer) =>
-                    handleAnswerChange(
-                      currentProblem,
-                      answer,
-                    )
+                    handleAnswerChange(currentProblem, answer)
                   }
                 />
               )}
 
-              {savingProblemId ===
-                currentProblem.problemId && (
+              {savingProblemId === currentProblem.problemId && (
                 <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
                   <Loader2 className="size-3 animate-spin" />
                   Saving answer...
                 </div>
               )}
 
-              {savingProblemId !==
-                currentProblem.problemId &&
+              {savingProblemId !== currentProblem.problemId &&
                 selectedAnswer && (
                   <div className="mt-4 flex items-center gap-2 text-xs text-emerald-600">
                     <CheckCircle2 className="size-3.5" />
@@ -456,9 +422,8 @@ if (
                 type="button"
                 disabled={isFirstQuestion}
                 onClick={() =>
-                  setCurrentQuestionIndex(
-                    (previous) =>
-                      Math.max(0, previous - 1),
+                  setCurrentQuestionIndex((previous) =>
+                    Math.max(0, previous - 1),
                   )
                 }
                 className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
@@ -468,74 +433,68 @@ if (
               </button>
 
               {isLastQuestion ? (
-  <AlertDialog>
-    <AlertDialogTrigger asChild>
-      <button
-        type="button"
-        disabled={submitMutation.isPending}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {submitMutation.isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Submitting...
-          </>
-        ) : (
-          <>
-            <Send className="size-4" />
-            Submit Assessment
-          </>
-        )}
-      </button>
-    </AlertDialogTrigger>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={!selectedAnswer || submitMutation.isPending}
+                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {submitMutation.isPending ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="size-4" />
+                          Submit Assessment
+                        </>
+                      )}
+                    </button>
+                  </AlertDialogTrigger>
 
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>
-          Submit your assessment?
-        </AlertDialogTitle>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Submit your assessment?
+                      </AlertDialogTitle>
 
-        <AlertDialogDescription>
-          Are you sure you want to submit your assessment?
-          Once submitted, you will not be able to change
-          your answers.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
+                      <AlertDialogDescription>
+                        Are you sure you want to submit your assessment? Once
+                        submitted, you will not be able to change your answers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
 
-      <AlertDialogFooter>
-        <AlertDialogCancel>
-          Cancel
-        </AlertDialogCancel>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
 
-        <AlertDialogAction
-          onClick={handleSubmit}
-          disabled={submitMutation.isPending}
-        >
-          {submitMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            "Yes, Submit"
-          )}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-) : (
+                      <AlertDialogAction
+                        onClick={handleSubmit}
+                        disabled={submitMutation.isPending}
+                      >
+                        {submitMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 size-4 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          "Yes, Submit"
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
                 <button
                   type="button"
+                  disabled={!selectedAnswer}
                   onClick={() =>
-                    setCurrentQuestionIndex(
-                      (previous) =>
-                        Math.min(
-                          problems.length - 1,
-                          previous + 1,
-                        ),
+                    setCurrentQuestionIndex((previous) =>
+                      Math.min(problems.length - 1, previous + 1),
                     )
                   }
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
                   <ChevronRight className="size-4" />
@@ -548,9 +507,7 @@ if (
           <aside className="h-fit space-y-4 lg:sticky lg:top-24">
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-900">
-                  Questions
-                </h3>
+                <h3 className="font-semibold text-slate-900">Questions</h3>
 
                 <span className="text-xs text-slate-500">
                   {answeredCount}/{problems.length}
@@ -558,41 +515,55 @@ if (
               </div>
 
               <div className="grid grid-cols-5 gap-2">
-                {problems.map(
-                  (problem, index) => {
-                    const answered = Boolean(
-                      answers[
-                        problem.problemId
-                      ]?.trim(),
-                    );
+                {problems.map((problem, index) => {
+                  const answered = Boolean(answers[problem.problemId]?.trim());
 
-                    const active =
-                      index ===
-                      currentQuestionIndex;
+                  const active = index === currentQuestionIndex;
 
-                    return (
-                      <button
-                        key={problem.problemId}
-                        type="button"
-                        onClick={() =>
-                          setCurrentQuestionIndex(
-                            index,
-                          )
+                  return (
+                    <button
+                      key={problem.problemId}
+                      type="button"
+                      disabled={index > currentQuestionIndex + 1}
+                      onClick={() => {
+                        /*
+                         * Allow going back to previous questions.
+                         */
+                        if (index <= currentQuestionIndex) {
+                          setCurrentQuestionIndex(index);
+                          return;
                         }
-                        className={[
-                          "flex size-9 items-center justify-center rounded-lg text-xs font-semibold transition",
-                          active
-                            ? "bg-indigo-600 text-white"
-                            : answered
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                              : "bg-slate-100 text-slate-600 hover:bg-slate-200",
-                        ].join(" ")}
-                      >
-                        {index + 1}
-                      </button>
-                    );
-                  },
-                )}
+
+                        /*
+                         * Allow moving to the immediate next
+                         * question only when current question
+                         * has been answered.
+                         */
+                        if (
+                          index === currentQuestionIndex + 1 &&
+                          selectedAnswer
+                        ) {
+                          setCurrentQuestionIndex(index);
+                        }
+                      }}
+                      className={[
+                        "flex size-9 items-center justify-center rounded-lg text-xs font-semibold transition",
+
+                        active
+                          ? "bg-indigo-600 text-white"
+                          : answered
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-600",
+
+                        index > currentQuestionIndex + 1
+                          ? "cursor-not-allowed opacity-40"
+                          : "hover:bg-slate-200",
+                      ].join(" ")}
+                    >
+                      {index + 1}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="mt-5 space-y-2 border-t pt-4 text-xs text-slate-500">
@@ -623,9 +594,8 @@ if (
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-indigo-700">
-                    Your answers are saved automatically.
-                    The server controls the assessment
-                    deadline.
+                    Your answers are saved automatically. The server controls
+                    the assessment deadline.
                   </p>
                 </div>
               </div>
@@ -664,14 +634,11 @@ function StartAttemptScreen({
         </div>
 
         <div className="mt-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">
-            {title}
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
 
           <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-500">
-            You are about to start your assessment.
-            Make sure you have enough time and a stable
-            internet connection.
+            You are about to start your assessment. Make sure you have enough
+            time and a stable internet connection.
           </p>
         </div>
 
@@ -699,17 +666,9 @@ function StartAttemptScreen({
               </p>
 
               <ul className="mt-2 space-y-1 text-xs leading-5 text-amber-800">
-                <li>
-                  • The timer starts immediately after
-                  clicking Start.
-                </li>
-                <li>
-                  • Your answers are saved automatically.
-                </li>
-                <li>
-                  • The assessment will be submitted when
-                  time expires.
-                </li>
+                <li>• The timer starts immediately after clicking Start.</li>
+                <li>• Your answers are saved automatically.</li>
+                <li>• The assessment will be submitted when time expires.</li>
               </ul>
             </div>
           </div>
@@ -755,13 +714,9 @@ function InfoCard({
         </div>
 
         <div>
-          <p className="text-xs text-slate-500">
-            {label}
-          </p>
+          <p className="text-xs text-slate-500">{label}</p>
 
-          <p className="mt-1 text-sm font-semibold text-slate-900">
-            {value}
-          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
         </div>
       </div>
     </div>
@@ -783,50 +738,59 @@ function MCQAnswer({
   disabled: boolean;
   onChange: (answer: string) => void;
 }) {
+  const answered = Boolean(value);
+
   return (
     <div className="space-y-3">
-      {problem.problem.options.map(
-        (option, index) => {
-          const selected = value === option.id;
+      {problem.problem.options.map((option, index) => {
+        const selected = value === option.id;
 
-          return (
-            <button
-              key={option.id}
-              type="button"
-              disabled={disabled}
-              onClick={() =>
-                onChange(option.id)
-              }
+        return (
+          <button
+            key={option.id}
+            type="button"
+            disabled={disabled || answered}
+            onClick={() => onChange(option.id)}
+            className={[
+              "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition",
+
+              selected
+                ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500"
+                : "border-slate-200",
+
+              !answered && !disabled
+                ? "hover:border-slate-300 hover:bg-slate-50"
+                : "",
+
+              answered && !selected ? "cursor-not-allowed opacity-50" : "",
+
+              selected ? "cursor-not-allowed" : "",
+            ].join(" ")}
+          >
+            <span
               className={[
-                "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition",
+                "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+
                 selected
-                  ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500"
-                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
-                disabled
-                  ? "cursor-not-allowed opacity-70"
-                  : "",
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-100 text-slate-600",
               ].join(" ")}
             >
-              <span
-                className={[
-                  "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                  selected
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-100 text-slate-600",
-                ].join(" ")}
-              >
-                {String.fromCharCode(
-                  65 + index,
-                )}
-              </span>
+              {String.fromCharCode(65 + index)}
+            </span>
 
-              <span className="pt-1 text-sm leading-6 text-slate-700">
-                {option.text}
-              </span>
-            </button>
-          );
-        },
-      )}
+            <span className="pt-1 text-sm leading-6 text-slate-700">
+              {option.text}
+            </span>
+          </button>
+        );
+      })}
+
+      {/* {answered && (
+        <p className="mt-3 text-xs font-medium text-emerald-600">
+          Answer selected. You cannot change your answer.
+        </p>
+      )} */}
     </div>
   );
 }
@@ -854,9 +818,7 @@ function WrittenAnswer({
       <textarea
         id="written-answer"
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
+        onChange={(event) => onChange(event.target.value)}
         rows={12}
         placeholder="Write your answer here..."
         className="w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
@@ -888,9 +850,7 @@ function AttemptFinished({
         <div
           className={[
             "mx-auto flex size-16 items-center justify-center rounded-full",
-            expired
-              ? "bg-amber-50"
-              : "bg-emerald-50",
+            expired ? "bg-amber-50" : "bg-emerald-50",
           ].join(" ")}
         >
           {expired ? (
@@ -901,9 +861,7 @@ function AttemptFinished({
         </div>
 
         <h1 className="mt-6 text-2xl font-bold text-slate-900">
-          {expired
-            ? "Assessment Time Expired"
-            : "Assessment Submitted"}
+          {expired ? "Assessment Time Expired" : "Assessment Submitted"}
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-slate-500">
@@ -932,9 +890,7 @@ function AttemptLoading() {
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="size-8 animate-spin text-indigo-600" />
 
-        <p className="text-sm text-slate-500">
-          Loading assessment...
-        </p>
+        <p className="text-sm text-slate-500">Loading assessment...</p>
       </div>
     </div>
   );
@@ -944,11 +900,7 @@ function AttemptLoading() {
 /* Error                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function AttemptError({
-  message,
-}: {
-  message: string;
-}) {
+function AttemptError({ message }: { message: string }) {
   return (
     <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-lg rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
@@ -960,9 +912,7 @@ function AttemptError({
           Unable to load assessment
         </h1>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          {message}
-        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
       </div>
     </div>
   );

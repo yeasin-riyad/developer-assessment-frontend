@@ -42,7 +42,8 @@ export function CandidateAssessmentCard({
 
     if (status === "SUBMITTED") {
       router.push(
-        `/assessments/${assessmentInfo.id}/result/${attemptId}`,
+        `/assessments/attempts/${attemptId}/result`
+        // `/assessments/${assessmentInfo.id}/result/${attemptId}`,
       );
     }
   };

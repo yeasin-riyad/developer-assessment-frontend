@@ -20,7 +20,7 @@ export interface AssessmentProblem {
   id: string;
   assessmentId: string;
   problemId: string;
-  points: number;
+  points?: number;
   order: number;
 
   problem: {
@@ -62,7 +62,7 @@ export interface UpdateAssessmentPayload {
 export interface AddProblemPayload {
   problemId: string;
   points: number;
-  order: number;
+  order:number
 }
 
 export interface CreateAssessmentResponse {

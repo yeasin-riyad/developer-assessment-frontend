@@ -1,25 +1,17 @@
 "use client";
 
-import {
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 import { Loader2, Search } from "lucide-react";
 
-import {
-  useAddProblemToAssessment,
-} from "../hooks";
+import { useAddProblemToAssessment } from "../hooks";
 
-import {
-  useProblems,
-} from "@/features/problems/hooks";
+import { useProblems } from "@/features/problems/hooks";
 
-import type {
-  Problem,
-} from "@/features/problems/types";
+import type { Problem } from "@/features/problems/types";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 import {
   Dialog,
@@ -44,49 +36,53 @@ export function AddProblemDialog({
 }: AddProblemDialogProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedProblem, setSelectedProblem] =
-    useState<Problem | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
-  const addProblemMutation =
-    useAddProblemToAssessment();
+  const addProblemMutation = useAddProblemToAssessment();
 
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useProblems({
+  const { data, isLoading, isError } = useProblems({
     search: search || undefined,
     limit: 20,
   });
 
-  const problems = useMemo(
-    () => data?.data ?? [],
-    [data],
-  );
+  const problems = useMemo(() => data?.data ?? [], [data]);
 
-  function handleAddProblem() {
-    if (!selectedProblem) {
-      return;
-    }
 
-    addProblemMutation.mutate(
-      {
-        assessmentId,
-        payload: {
-          problemId: selectedProblem.id,
-          points: selectedProblem.points,
-          order: 1,
-        },
-      },
-      {
-        onSuccess: () => {
-          setSelectedProblem(null);
-          setSearch("");
-          setOpen(false);
-        },
-      },
-    );
+function handleAddProblem() {
+  if (!selectedProblem) {
+    return;
   }
+
+  addProblemMutation.mutate(
+    {
+      assessmentId,
+      payload: {
+        problemId: selectedProblem.id,
+        points: selectedProblem.points,
+        order:1
+      },
+    },
+    {
+      onSuccess: () => {
+        toast.success("Problem added successfully!", {
+          duration: 1000,
+        });
+      },
+
+      onError: (error) => {
+        toast.error("Unable to add problem", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "We couldn't add this problem to the assessment. Please try again.",
+          duration: 2000,
+        });
+      },
+    },
+  );
+}
+
+
 
   function handleOpenChange(value: boolean) {
     setOpen(value);
@@ -98,23 +94,16 @@ export function AddProblemDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={handleOpenChange}
-    >
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            Add Problem
-          </DialogTitle>
+          <DialogTitle>Add Problem</DialogTitle>
 
           <DialogDescription>
-            Select a problem from your problem bank
-            to add it to this assessment.
+            Select a problem from your problem bank to add it to this
+            assessment.
           </DialogDescription>
         </DialogHeader>
 
@@ -125,9 +114,7 @@ export function AddProblemDialog({
 
             <Input
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="Search problems..."
               className="pl-9"
             />
@@ -147,30 +134,22 @@ export function AddProblemDialog({
               </div>
             )}
 
-            {!isLoading &&
-              !isError &&
-              problems.length === 0 && (
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <p className="font-medium">
-                    No problems found
-                  </p>
+            {!isLoading && !isError && problems.length === 0 && (
+              <div className="rounded-lg border border-dashed p-8 text-center">
+                <p className="font-medium">No problems found</p>
 
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Try a different search term.
-                  </p>
-                </div>
-              )}
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Try a different search term.
+                </p>
+              </div>
+            )}
 
             {problems.map((problem) => (
               <ProblemSelectItem
                 key={problem.id}
                 problem={problem}
-                selected={
-                  selectedProblem?.id === problem.id
-                }
-                onSelect={() =>
-                  setSelectedProblem(problem)
-                }
+                selected={selectedProblem?.id === problem.id}
+                onSelect={() => setSelectedProblem(problem)}
               />
             ))}
           </div>
@@ -178,6 +157,7 @@ export function AddProblemDialog({
 
         <DialogFooter>
           <Button
+            type="button"
             variant="outline"
             onClick={() => setOpen(false)}
           >
@@ -185,17 +165,15 @@ export function AddProblemDialog({
           </Button>
 
           <Button
-            disabled={
-              !selectedProblem ||
-              addProblemMutation.isPending
-            }
+            type="button"
+            disabled={!selectedProblem || addProblemMutation.isPending}
             onClick={handleAddProblem}
           >
             {addProblemMutation.isPending && (
               <Loader2 className="mr-2 size-4 animate-spin" />
             )}
 
-            Add Problem
+            {addProblemMutation.isPending ? "Adding..." : "Add Problem"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -219,16 +197,12 @@ function ProblemSelectItem({
       type="button"
       onClick={onSelect}
       className={`w-full rounded-lg border p-4 text-left transition-colors ${
-        selected
-          ? "border-primary bg-primary/5"
-          : "hover:bg-muted/50"
+        selected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="font-medium">
-            {problem.title}
-          </p>
+          <p className="font-medium">{problem.title}</p>
 
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             <span className="rounded-md bg-muted px-2 py-1">

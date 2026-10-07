@@ -57,13 +57,19 @@ export async function addProblemToAssessment(
   assessmentId: string,
   payload: AddProblemPayload,
 ): Promise<AddProblemResponse> {
-  return api<AddProblemResponse>(
+  console.log("📤 API REQUEST");
+
+  const response = await api<AddProblemResponse>(
     `/assessments/${assessmentId}/problems`,
     {
       method: "POST",
       body: payload,
     },
   );
+
+  console.log("📥 API RESPONSE", response);
+
+  return response;
 }
 
 export async function removeProblemFromAssessment(
