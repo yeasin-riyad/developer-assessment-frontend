@@ -18,7 +18,6 @@ import { validateWithZod } from "@/lib/form-validation";
 
 import { ProblemBasicInfo } from "./problem-basic-info";
 import { MCQOptionsSection } from "./mcq-options-section";
-import { WrittenProblemSection } from "./written-problem-section";
 
 const defaultValues: CreateProblemFormValues = {
   title: "",
@@ -26,30 +25,16 @@ const defaultValues: CreateProblemFormValues = {
   type: ProblemType.MCQ,
   difficulty: ProblemDifficulty.MEDIUM,
   points: 10,
-
   options: [
-    {
-      text: "",
-      isCorrect: true,
-    },
-    {
-      text: "",
-      isCorrect: false,
-    },
-    {
-      text: "",
-      isCorrect: false,
-    },
-    {
-      text: "",
-      isCorrect: false,
-    },
+    { text: "", isCorrect: true },
+    { text: "", isCorrect: false },
+    { text: "", isCorrect: false },
+    { text: "", isCorrect: false },
   ],
 };
 
 export function ProblemForm() {
   const router = useRouter();
-
   const createProblemMutation = useCreateProblem();
 
   const form = useForm({
@@ -61,26 +46,23 @@ export function ProblemForm() {
     },
 
     onSubmit: async ({ value }) => {
+      const payload: CreateProblemFormValues = {
+        title: value.title.trim(),
+        description: value.description.trim(),
+        type: ProblemType.MCQ,
+        difficulty: value.difficulty,
+        points: value.points,
+        options: value.options.map((option) => ({
+          text: option.text.trim(),
+          isCorrect: option.isCorrect,
+        })),
+      };
+
       try {
-        const payload: CreateProblemFormValues = {
-          title: value.title.trim(),
-          description: value.description.trim(),
-          type: value.type,
-          difficulty: value.difficulty,
-          points: value.points,
-
-          ...(value.type === ProblemType.MCQ
-            ? {
-                options: value.options,
-              }
-            : {}),
-        };
-
         await createProblemMutation.mutateAsync(payload);
-
         router.push("/problems");
       } catch {
-        // API error is handled below.
+        // Mutation error is displayed below.
       }
     },
   });
@@ -92,7 +74,6 @@ export function ProblemForm() {
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
-
         form.handleSubmit();
       }}
       className="space-y-6"
@@ -103,23 +84,11 @@ export function ProblemForm() {
         disabled={isSubmitting}
       />
 
-      {/* Dynamic Problem Content */}
-      <form.Subscribe
-        selector={(state) => state.values.type}
-      >
-        {(type) => {
-          if (type === ProblemType.MCQ) {
-            return (
-              <MCQOptionsSection
-                form={form}
-                disabled={isSubmitting}
-              />
-            );
-          }
-
-          return <WrittenProblemSection />;
-        }}
-      </form.Subscribe>
+      {/* MCQ Options Only */}
+      <MCQOptionsSection
+        form={form}
+        disabled={isSubmitting}
+      />
 
       {/* API Error */}
       {createProblemMutation.isError && (
@@ -147,23 +116,49 @@ export function ProblemForm() {
           Cancel
         </Button>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
+        <form.Subscribe
+          selector={(state) => ({
+            canSubmit: state.canSubmit,
+            isSubmittingForm: state.isSubmitting,
+            values: state.values,
+          })}
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <Plus className="mr-2 size-4" />
-              Create Problem
-            </>
-          )}
-        </Button>
+          {({ canSubmit, isSubmittingForm, values }) => {
+            const validation = createProblemSchema.safeParse(values);
+
+            const isFormValid =
+              validation.success &&
+              values.title.trim().length > 0 &&
+              values.description.trim().length > 0;
+
+            const isDisabled =
+              !canSubmit ||
+              !isFormValid ||
+              isSubmitting ||
+              isSubmittingForm;
+
+            return (
+              <Button
+                type="submit"
+                disabled={isDisabled}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 size-4" />
+                    Create Problem
+                  </>
+                )}
+              </Button>
+            );
+          }}
+        </form.Subscribe>
       </div>
     </form>
   );
 }
+

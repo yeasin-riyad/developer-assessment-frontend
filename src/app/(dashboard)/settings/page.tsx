@@ -1,11 +1,7 @@
-import React from 'react'
+import { SettingsPage } from "@/features/settings/components/settings-page";
 
-const settings = () => {
-  return (
-    <div>
-      settings Page
-    </div>
-  )
+
+export default function Page() {
+  return <SettingsPage />;
 }
 
-export default settings

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FormApi } from "@tanstack/react-form";
@@ -25,7 +26,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 import {
   ProblemDifficulty,
-  ProblemType,
   type CreateProblemFormValues,
 } from "@/features/problems";
 
@@ -44,7 +44,7 @@ export function ProblemBasicInfo({
         <CardTitle>Basic Information</CardTitle>
 
         <CardDescription>
-          Define the basic information for your problem.
+          Define the title, question, difficulty, and points for your MCQ.
         </CardDescription>
       </CardHeader>
 
@@ -56,9 +56,7 @@ export function ProblemBasicInfo({
 
             return (
               <div className="space-y-2">
-                <Label htmlFor="title">
-                  Problem Title
-                </Label>
+                <Label htmlFor="title">Problem Title</Label>
 
                 <Input
                   id="title"
@@ -67,9 +65,7 @@ export function ProblemBasicInfo({
                   disabled={disabled}
                   onBlur={field.handleBlur}
                   onChange={(event) =>
-                    field.handleChange(
-                      event.target.value,
-                    )
+                    field.handleChange(event.target.value)
                   }
                   aria-invalid={Boolean(error)}
                 />
@@ -97,15 +93,13 @@ export function ProblemBasicInfo({
 
                 <Textarea
                   id="description"
-                  placeholder="Write the question clearly..."
+                  placeholder="Write the MCQ question clearly..."
                   rows={6}
                   value={field.state.value}
                   disabled={disabled}
                   onBlur={field.handleBlur}
                   onChange={(event) =>
-                    field.handleChange(
-                      event.target.value,
-                    )
+                    field.handleChange(event.target.value)
                   }
                   aria-invalid={Boolean(error)}
                 />
@@ -120,53 +114,8 @@ export function ProblemBasicInfo({
           }}
         </form.Field>
 
-        {/* Select Fields */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Problem Type */}
-          <form.Field name="type">
-            {(field) => {
-              const error = field.state.meta.errors[0];
-
-              return (
-                <div className="space-y-2">
-                  <Label>Problem Type</Label>
-
-                  <Select
-                    value={field.state.value}
-                    disabled={disabled}
-                    onValueChange={(value) =>
-                      field.handleChange(
-                        value as ProblemType,
-                      )
-                    }
-                  >
-                    <SelectTrigger
-                      aria-invalid={Boolean(error)}
-                    >
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      <SelectItem value="MCQ">
-                        Multiple Choice
-                      </SelectItem>
-
-                      <SelectItem value="WRITTEN">
-                        Written
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {error && (
-                    <p className="text-sm text-destructive">
-                      {String(error)}
-                    </p>
-                  )}
-                </div>
-              );
-            }}
-          </form.Field>
-
+        {/* Difficulty and Points */}
+        <div className="grid gap-6 sm:grid-cols-2">
           {/* Difficulty */}
           <form.Field name="difficulty">
             {(field) => {
@@ -180,29 +129,17 @@ export function ProblemBasicInfo({
                     value={field.state.value}
                     disabled={disabled}
                     onValueChange={(value) =>
-                      field.handleChange(
-                        value as ProblemDifficulty,
-                      )
+                      field.handleChange(value as ProblemDifficulty)
                     }
                   >
-                    <SelectTrigger
-                      aria-invalid={Boolean(error)}
-                    >
+                    <SelectTrigger aria-invalid={Boolean(error)}>
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
 
                     <SelectContent>
-                      <SelectItem value="EASY">
-                        Easy
-                      </SelectItem>
-
-                      <SelectItem value="MEDIUM">
-                        Medium
-                      </SelectItem>
-
-                      <SelectItem value="HARD">
-                        Hard
-                      </SelectItem>
+                      <SelectItem value="EASY">Easy</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="HARD">Hard</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -223,22 +160,23 @@ export function ProblemBasicInfo({
 
               return (
                 <div className="space-y-2">
-                  <Label htmlFor="points">
-                    Points
-                  </Label>
+                  <Label htmlFor="points">Points</Label>
 
                   <Input
                     id="points"
                     type="number"
                     min={1}
+                    step={1}
                     value={field.state.value}
                     disabled={disabled}
                     onBlur={field.handleBlur}
-                    onChange={(event) =>
-                      field.handleChange(
-                        Number(event.target.value),
-                      )
-                    }
+                    onChange={(event) => {
+                      const value = event.target.value;
+
+                      if (value !== "") {
+                        field.handleChange(Number(value));
+                      }
+                    }}
                     aria-invalid={Boolean(error)}
                   />
 
@@ -256,3 +194,4 @@ export function ProblemBasicInfo({
     </Card>
   );
 }
+

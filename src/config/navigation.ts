@@ -23,6 +23,7 @@ export interface NavigationItem {
 }
 
 export const dashboardNavigation: NavigationItem[] = [
+  // Dashboard
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -43,25 +44,22 @@ export const dashboardNavigation: NavigationItem[] = [
     icon: UserPlus,
     roles: [UserRole.CANDIDATE],
   },
+  {
+    title: "Assessments",
+    href: "/assessments/my",
+    icon: ClipboardCheck,
+    roles: [UserRole.CANDIDATE],
+  },
 
-  // Assessments
-{
-  title: "Assessments",
-  href: "/assessments/my",
-  icon: ClipboardCheck,
-  roles: [UserRole.CANDIDATE],
-},
-{
-  title: "Assessments",
-  href: "/assessments",
-  icon: ClipboardCheck,
-  roles: [
-    UserRole.RECRUITER,
-    UserRole.CREATOR,
-    UserRole.EVALUATOR,
-  ],
-},
+  // Recruiter, Creator, Evaluator
+  {
+    title: "Assessments",
+    href: "/assessments",
+    icon: ClipboardCheck,
+    roles: [UserRole.RECRUITER, UserRole.EVALUATOR],
+  },
 
+  // Problems
   {
     title: "Problems",
     href: "/problems",
@@ -74,14 +72,12 @@ export const dashboardNavigation: NavigationItem[] = [
     ],
   },
 
+  // Candidates
   {
     title: "Candidates",
     href: "/candidates",
     icon: Users,
-    roles: [
-      UserRole.RECRUITER,
-      UserRole.ADMIN,
-    ],
+    roles: [UserRole.RECRUITER, UserRole.ADMIN],
   },
 
   // Recruiter
@@ -92,6 +88,7 @@ export const dashboardNavigation: NavigationItem[] = [
     roles: [UserRole.RECRUITER],
   },
 
+  // Evaluator
   {
     title: "Evaluations",
     href: "/evaluations",
@@ -99,17 +96,15 @@ export const dashboardNavigation: NavigationItem[] = [
     roles: [UserRole.EVALUATOR],
   },
 
-  {
-    title: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    roles: [
-      UserRole.RECRUITER,
-      UserRole.EVALUATOR,
-      UserRole.ADMIN,
-    ],
-  },
+  // Reports
+  // {
+  //   title: "Reports",
+  //   href: "/reports",
+  //   icon: BarChart3,
+  //   roles: [UserRole.RECRUITER, UserRole.EVALUATOR, UserRole.ADMIN],
+  // },
 
+  // Company
   {
     title: "Company",
     href: "/company",
@@ -117,13 +112,39 @@ export const dashboardNavigation: NavigationItem[] = [
     roles: [UserRole.RECRUITER],
   },
 
+  // Admin
+  // {
+  //   title: "Admin Dashboard",
+  //   href: "/admin/dashboard",
+  //   icon: LayoutDashboard,
+  //   roles: [UserRole.ADMIN],
+  // },
   {
-    title: "Administration",
-    href: "/admin/users",
-    icon: ShieldCheck,
+    title: "Manage Users",
+    href: "/dashboard/users",
+    icon: Users,
+    roles: [UserRole.ADMIN],
+  },
+  {
+    title: "Manage Companies",
+    href: "/dashboard/companies",
+    icon: Building2,
+    roles: [UserRole.ADMIN],
+  },
+  {
+    title: "Manage Problems",
+    href: "/dashboard/problems",
+    icon: FileText,
+    roles: [UserRole.ADMIN],
+  },
+  {
+    title: "Manage Assessments",
+    href: "/dashboard/admin-assessments",
+    icon: ClipboardCheck,
     roles: [UserRole.ADMIN],
   },
 
+  // Settings
   {
     title: "Settings",
     href: "/settings",

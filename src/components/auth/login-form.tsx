@@ -95,6 +95,8 @@ export function LoginForm() {
           password,
         });
 
+        console.log(response,"RES")
+
       const accessToken =
         response.data.accessToken;
 
@@ -113,6 +115,7 @@ export function LoginForm() {
       window.dispatchEvent(
         new Event("auth:changed"),
       );
+      
 
       router.replace("/dashboard");
     } catch (error) {

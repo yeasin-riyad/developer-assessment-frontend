@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage";
 import {
   UserRole,
 } from "@/features/auth";
@@ -44,7 +45,7 @@ export default function DashboardPage() {
 
     case UserRole.ADMIN:
       return (
-        <AdminDashboard user={user} />
+        <AdminDashboardPage />
       );
 
     default:

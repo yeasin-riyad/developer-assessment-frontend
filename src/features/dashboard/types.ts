@@ -17,3 +17,4 @@ export interface DashboardUser {
 export interface DashboardSectionProps {
   user: AuthUser;
 }
+
