@@ -1,10 +1,45 @@
+import { LoginForm } from "@/components/auth";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <Button>
-      Click Me
-    </Button>
+    <main className="min-h-screen bg-background">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Branding Section */}
+        <section className="hidden bg-muted lg:flex lg:flex-col lg:justify-between lg:p-10">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              DevAssess
+            </h1>
+          </div>
+
+          <div className="max-w-md">
+            <blockquote className="space-y-4">
+              <p className="text-2xl font-medium leading-relaxed">
+                “Build assessments, evaluate developers, and make
+                data-driven hiring decisions.”
+              </p>
+
+              <footer className="text-sm text-muted-foreground">
+                Developer Assessment Platform
+              </footer>
+            </blockquote>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} DevAssess. All rights reserved.
+          </p>
+        </section>
+
+        {/* Auth Form */}
+        <section className="flex min-h-screen items-center justify-center px-4 py-8">
+          <div className="w-full max-w-md">
+             <LoginForm/>
+          </div>
+        </section>
+      </div>
+    </main>
+   
     
   );
 }

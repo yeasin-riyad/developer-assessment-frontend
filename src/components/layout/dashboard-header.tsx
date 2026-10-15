@@ -1,163 +1,127 @@
+
 "use client";
 
-import Link from "next/link";
 import {
-  Bell,
-  Menu,
+  CalendarClock,
+  ShieldCheck,
 } from "lucide-react";
 
-import {
-  Button,
-} from "@/components/ui/button";
-
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
-
-import {
-  Separator,
-} from "@/components/ui/separator";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/providers/auth.provider";
+import { useMySubscription } from "@/features/billing";
 
+export function DashboardHeader() {
+  const { user } = useAuth();
 
+  const isCandidate = user?.role === "CANDIDATE";
 
-interface DashboardHeaderProps {
-  onMenuClick: () => void;
-}
+  const subscriptionQuery = useMySubscription(
+    Boolean(user && isCandidate),
+  );
 
-export function DashboardHeader({
-  onMenuClick,
-}: DashboardHeaderProps) {
-  const {
-    user,
-    logout,
-  } = useAuth();
+  const subscription = subscriptionQuery.data?.data;
+
+  const remainingDays = subscription?.endDate
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(subscription.endDate).getTime() -
+            Date.now()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
+    : 0;
+
+  const hasActiveSubscription =
+    subscription?.status === "ACTIVE" &&
+    (subscription?.plan === "STARTER" ||
+      subscription?.plan === "PRO") &&
+    remainingDays > 0;
 
   if (!user) {
     return null;
   }
 
   const initials = user.name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
-      {/* Mobile menu */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="mr-2 md:hidden"
-        onClick={onMenuClick}
-      >
-        <Menu className="size-5" />
-      </Button>
+    <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur-xl md:px-6">
+      {/* Welcome message */}
+      <div className="min-w-0 flex-1">
+        <h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
+          Welcome back, {user.name.trim().split(/\s+/)[0]} 👋
+        </h1>
 
-      {/* Page area */}
-      <div className="flex-1">
-        <p className="text-sm font-medium">
-          Welcome back, {user.name.split(" ")[0]} 👋
-        </p>
-
-        <p className="hidden text-xs text-muted-foreground sm:block">
+        <p className="mt-1 hidden text-xs text-slate-500 sm:block">
           Manage your developer assessment platform.
         </p>
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
+      {/* Subscription remaining days */}
+      {isCandidate && (
+        <div
+          className={`hidden shrink-0 items-center gap-2 rounded-xl border px-3 py-2 sm:flex ${
+            hasActiveSubscription
+              ? remainingDays <= 5
+                ? "border-amber-200 bg-amber-50 text-amber-700"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-slate-200 bg-slate-50 text-slate-600"
+          }`}
         >
-          <Bell className="size-4" />
+          <CalendarClock className="size-4 shrink-0" />
 
-          <span className="absolute right-2 top-2 size-1.5 rounded-full bg-destructive" />
-        </Button>
+          <div className="leading-tight">
+            <p className="text-xs font-medium">
+              {subscriptionQuery.isPending
+                ? "Subscription"
+                : hasActiveSubscription
+                  ? "Subscription remaining"
+                  : "No active plan"}
+            </p>
 
-        <Separator
-          orientation="vertical"
-          className="mx-1 hidden h-6 sm:block"
-        />
+            <p className="text-sm font-bold">
+              {subscriptionQuery.isPending
+                ? "Loading..."
+                : hasActiveSubscription
+                  ? `${remainingDays} ${
+                      remainingDays === 1 ? "day" : "days"
+                    } left`
+                  : "Expired"}
+            </p>
+          </div>
+        </div>
+      )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button
-              variant="ghost"
-              className="h-10 gap-2 px-2"
-            >
-              <Avatar className="size-8">
-                <AvatarFallback>
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+      {/* User information — no dropdown or buttons */}
+      <div className="flex min-w-0 shrink-0 items-center gap-2.5 border-l border-slate-200 pl-3 sm:pl-4">
+        <Avatar className="size-9 shrink-0 border border-indigo-100">
+          <AvatarFallback className="bg-indigo-50 text-sm font-semibold text-indigo-700">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
 
-              <div className="hidden text-left sm:block">
-                <p className="max-w-32 truncate text-sm font-medium">
-                  {user.name}
-                </p>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="hidden size-3.5 shrink-0 text-indigo-600 sm:block" />
 
-                <p className="text-xs text-muted-foreground">
-                  {user.role}
-                </p>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
+            <p className="max-w-28 truncate text-xs font-semibold text-slate-800 sm:max-w-40 sm:text-sm">
+              {user.role}
+            </p>
+          </div>
 
-          <DropdownMenuContent
-            align="end"
-            className="w-56"
+          <p
+            title={user.email}
+            className="max-w-28 truncate text-[11px] text-slate-500 sm:max-w-48 sm:text-xs"
           >
-            <DropdownMenuLabel>
-              <div>
-                <p className="font-medium">
-                  {user.name}
-                </p>
-
-                <p className="text-xs font-normal text-muted-foreground">
-                  {user.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem>
-              <Link href="/profile">
-                Profile
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem>
-              <Link href="/settings">
-                Settings
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              onClick={logout}
-              className="text-destructive focus:text-destructive"
-            >
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            {user.email}
+          </p>
+        </div>
       </div>
     </header>
   );

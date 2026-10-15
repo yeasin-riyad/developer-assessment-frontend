@@ -67,7 +67,6 @@ export async function addProblemToAssessment(
     },
   );
 
-  console.log("📥 API RESPONSE", response);
 
   return response;
 }

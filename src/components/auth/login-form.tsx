@@ -32,6 +32,7 @@ import {
 import { validateWithZod } from "@/lib/form-validation";
 import { setAccessToken } from "@/lib/auth";
 
+
 const DEMO_ACCOUNTS = [
   {
     label: "Recruiter",
@@ -51,6 +52,11 @@ const DEMO_ACCOUNTS = [
   {
     label: "Evaluator",
     email: "evaluator@gmail.com",
+    password: "12345678",
+  },
+  {
+    label: "Candidate",
+    email: "mazumderyeasin98@gmail.com",
     password: "12345678",
   },
 ] as const;
@@ -84,47 +90,40 @@ export function LoginForm() {
     },
   });
 
-  const handleLogin = async (
-    email: string,
-    password: string,
-  ) => {
-    try {
-      const response =
-        await loginMutation.mutateAsync({
-          email,
-          password,
-        });
 
-        console.log(response,"RES")
+const handleLogin = async (
+  email: string,
+  password: string,
+) => {
+  try {
+    const response = await loginMutation.mutateAsync({
+      email,
+      password,
+    });
 
-      const accessToken =
-        response.data.accessToken;
+    const accessToken = response.data.accessToken;
 
-      if (!accessToken) {
-        throw new Error(
-          "Access token was not returned",
-        );
-      }
-
-      setAccessToken(accessToken);
-
-      /**
-       * Notify AuthProvider that
-       * authentication state changed.
-       */
-      window.dispatchEvent(
-        new Event("auth:changed"),
-      );
-      
-
-      router.replace("/dashboard");
-    } catch (error) {
-      console.error(
-        "Login failed:",
-        error,
-      );
+    if (!accessToken) {
+      throw new Error("Access token was not returned");
     }
-  };
+
+    setAccessToken(accessToken);
+
+    window.dispatchEvent(new Event("auth:changed"));
+
+    // Adjust this path if your login API returns the role elsewhere.
+    // const role = response.data.user?.role;
+
+    // if (role === "CANDIDATE") {
+    //   router.replace("/billing");
+    //   return;
+    // }
+
+    router.replace("/dashboard");
+  } catch (error) {
+    console.error("Login failed:", error);
+  }
+};
 
   const handleDemoLogin = async (
     email: string,
