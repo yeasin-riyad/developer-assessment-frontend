@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 
 export function GoogleButton() {
   const handleGoogleLogin = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    // const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    const apiUrl="https://developer-assessment-platform-jade.vercel.app/api/v1";
 
     if (!apiUrl) {
       console.error(
