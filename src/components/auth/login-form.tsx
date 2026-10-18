@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -32,7 +33,6 @@ import {
 import { validateWithZod } from "@/lib/form-validation";
 import { setAccessToken } from "@/lib/auth";
 
-
 const DEMO_ACCOUNTS = [
   {
     label: "Recruiter",
@@ -50,11 +50,6 @@ const DEMO_ACCOUNTS = [
     password: "12345678",
   },
   {
-    label: "Evaluator",
-    email: "evaluator@gmail.com",
-    password: "12345678",
-  },
-  {
     label: "Candidate",
     email: "mazumderyeasin98@gmail.com",
     password: "12345678",
@@ -67,8 +62,7 @@ export function LoginForm() {
 
   const loginMutation = useLogin();
 
-  const registered =
-    searchParams.get("registered");
+  const registered = searchParams.get("registered");
 
   const form = useForm({
     defaultValues:
@@ -76,54 +70,39 @@ export function LoginForm() {
 
     validators: {
       onChange: ({ value }) =>
-        validateWithZod(
-          loginSchema,
-          value,
-        ),
+        validateWithZod(loginSchema, value),
     },
 
     onSubmit: async ({ value }) => {
-      await handleLogin(
-        value.email,
-        value.password,
-      );
+      await handleLogin(value.email, value.password);
     },
   });
 
+  const handleLogin = async (
+    email: string,
+    password: string,
+  ) => {
+    try {
+      const response = await loginMutation.mutateAsync({
+        email,
+        password,
+      });
 
-const handleLogin = async (
-  email: string,
-  password: string,
-) => {
-  try {
-    const response = await loginMutation.mutateAsync({
-      email,
-      password,
-    });
+      const accessToken = response.data.accessToken;
 
-    const accessToken = response.data.accessToken;
+      if (!accessToken) {
+        throw new Error("Access token was not returned");
+      }
 
-    if (!accessToken) {
-      throw new Error("Access token was not returned");
+      setAccessToken(accessToken);
+
+      window.dispatchEvent(new Event("auth:changed"));
+
+      router.replace("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
     }
-
-    setAccessToken(accessToken);
-
-    window.dispatchEvent(new Event("auth:changed"));
-
-    // Adjust this path if your login API returns the role elsewhere.
-    // const role = response.data.user?.role;
-
-    // if (role === "CANDIDATE") {
-    //   router.replace("/billing");
-    //   return;
-    // }
-
-    router.replace("/dashboard");
-  } catch (error) {
-    console.error("Login failed:", error);
-  }
-};
+  };
 
   const handleDemoLogin = async (
     email: string,
@@ -132,8 +111,7 @@ const handleLogin = async (
     await handleLogin(email, password);
   };
 
-  const isSubmitting =
-    loginMutation.isPending;
+  const isSubmitting = loginMutation.isPending;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6">
@@ -150,13 +128,12 @@ const handleLogin = async (
 
         <CardContent>
           <div className="space-y-5">
-
             {/* Registered Message */}
             {registered === "true" && (
               <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
                 <p className="text-sm text-green-700 dark:text-green-400">
-                  Account created successfully.
-                  Please sign in to continue.
+                  Account created successfully. Please sign in
+                  to continue.
                 </p>
               </div>
             )}
@@ -171,7 +148,6 @@ const handleLogin = async (
               onSubmit={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-
                 form.handleSubmit();
               }}
               className="space-y-4"
@@ -179,14 +155,11 @@ const handleLogin = async (
               {/* Email */}
               <form.Field name="email">
                 {(field) => {
-                  const error =
-                    field.state.meta.errors[0];
+                  const error = field.state.meta.errors[0];
 
                   return (
                     <div className="space-y-2">
-                      <Label htmlFor="email">
-                        Email
-                      </Label>
+                      <Label htmlFor="email">Email</Label>
 
                       <Input
                         id="email"
@@ -198,9 +171,7 @@ const handleLogin = async (
                         disabled={isSubmitting}
                         onBlur={field.handleBlur}
                         onChange={(event) =>
-                          field.handleChange(
-                            event.target.value,
-                          )
+                          field.handleChange(event.target.value)
                         }
                       />
 
@@ -217,14 +188,11 @@ const handleLogin = async (
               {/* Password */}
               <form.Field name="password">
                 {(field) => {
-                  const error =
-                    field.state.meta.errors[0];
+                  const error = field.state.meta.errors[0];
 
                   return (
                     <div className="space-y-2">
-                      <Label htmlFor="password">
-                        Password
-                      </Label>
+                      <Label htmlFor="password">Password</Label>
 
                       <Input
                         id="password"
@@ -236,9 +204,7 @@ const handleLogin = async (
                         disabled={isSubmitting}
                         onBlur={field.handleBlur}
                         onChange={(event) =>
-                          field.handleChange(
-                            event.target.value,
-                          )
+                          field.handleChange(event.target.value)
                         }
                       />
 
@@ -322,7 +288,6 @@ const handleLogin = async (
             {/* Register */}
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
-
               <Link
                 href="/register"
                 className="font-medium text-foreground underline-offset-4 hover:underline"
