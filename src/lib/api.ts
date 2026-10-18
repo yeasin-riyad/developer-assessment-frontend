@@ -6,7 +6,7 @@ import {
   setAccessToken,
 } from "./auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://developer-assessment-platform-ivox7ums6-yeasin-riyads-projects.vercel.app/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://developer-assessment-platform-jade.vercel.app/api/v1";
 
 if (!API_URL) {
   throw new Error(
