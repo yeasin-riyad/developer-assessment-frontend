@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   Card,
@@ -17,15 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-import {
-  AuthDivider,
-  GoogleButton,
-} from "@/components/auth";
+import { AuthDivider, GoogleButton } from "@/components/auth";
 
 import {
   registerDefaultValues,
@@ -41,39 +36,55 @@ export function RegisterForm() {
   const registerMutation = useRegister();
 
   const form = useForm({
-    defaultValues:
-      registerDefaultValues satisfies RegisterFormValues,
+    defaultValues: registerDefaultValues satisfies RegisterFormValues,
+
+    validators: {
+      // Form-level validation — blocks submit when invalid and
+      // surfaces inline errors on every field.
+      onSubmit: ({ value }) => {
+        const result = registerSchema.safeParse(value);
+
+        if (result.success) return undefined;
+
+        return result.error.issues.reduce<Record<string, string>>(
+          (errors, issue) => {
+            const path = issue.path.join(".");
+
+            if (path && !errors[path]) {
+              errors[path] = issue.message;
+            }
+
+            return errors;
+          },
+          {},
+        );
+      },
+    },
 
     onSubmit: async ({ value }) => {
-      /*
-       * Final full-form Zod validation
-       */
-      console.log("HI")
-      const result = registerSchema.safeParse(value);
-
-      if (!result.success) {
-        console.log(
-          "Validation failed:",
-          result.error.flatten(),
-        );
-
-        return;
-      }
-
+      // If we reach here, form-level validation passed.
       try {
         await registerMutation.mutateAsync({
-          name: result.data.name,
-          email: result.data.email,
-          password: result.data.password,
-          role: result.data.role,
+          name: value.name,
+          email: value.email,
+          password: value.password,
+          role: value.role,
+        });
+
+        toast.success("Account created successfully", {
+          description: "Please sign in to continue.",
         });
 
         router.push("/login?registered=true");
       } catch (error) {
-        console.error(
-          "Registration failed:",
-          error,
-        );
+        toast.error("Registration failed", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "Something went wrong. Please try again.",
+        });
+
+        console.error("Registration failed:", error);
       }
     },
   });
@@ -89,8 +100,7 @@ export function RegisterForm() {
           </CardTitle>
 
           <CardDescription>
-            Join DevAssess and start building better developer
-            assessments.
+            Join DevAssess and start building better developer assessments.
           </CardDescription>
         </CardHeader>
 
@@ -104,6 +114,7 @@ export function RegisterForm() {
 
             {/* Form */}
             <form
+              noValidate
               onSubmit={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -121,32 +132,38 @@ export function RegisterForm() {
                 <form.Field
                   name="name"
                   validators={{
-                    onChange: ({ value }) => {
+                    onBlur: ({ value }) => {
                       const result =
-                        registerSchema.shape.name.safeParse(
-                          value,
-                        );
+                        registerSchema.shape.name.safeParse(value);
 
-                      if (result.success) {
-                        return undefined;
-                      }
+                      if (result.success) return undefined;
 
                       return (
-                        result.error.issues[0]?.message ??
-                        "Invalid name"
+                        result.error.issues[0]?.message ?? "Invalid name"
+                      );
+                    },
+                    onChange: ({ value }) => {
+                      const result =
+                        registerSchema.shape.name.safeParse(value);
+
+                      if (result.success) return undefined;
+
+                      return (
+                        result.error.issues[0]?.message ?? "Invalid name"
                       );
                     },
                   }}
                 >
                   {(field) => {
                     const error =
-                      field.state.meta.errors[0];
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                        ? field.state.meta.errors[0]
+                        : null;
 
                     return (
                       <div className="space-y-2">
-                        <Label htmlFor="name">
-                          Full name
-                        </Label>
+                        <Label htmlFor="name">Full name</Label>
 
                         <Input
                           id="name"
@@ -155,16 +172,22 @@ export function RegisterForm() {
                           autoComplete="name"
                           value={field.state.value}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(error)}
+                          aria-describedby={
+                            error ? "name-error" : undefined
+                          }
                           onBlur={field.handleBlur}
                           onChange={(event) =>
-                            field.handleChange(
-                              event.target.value,
-                            )
+                            field.handleChange(event.target.value)
                           }
                         />
 
                         {error && (
-                          <p className="text-sm text-destructive">
+                          <p
+                            id="name-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                          >
                             {error}
                           </p>
                         )}
@@ -177,15 +200,22 @@ export function RegisterForm() {
                 <form.Field
                   name="email"
                   validators={{
+                    onBlur: ({ value }) => {
+                      const result =
+                        registerSchema.shape.email.safeParse(value);
+
+                      if (result.success) return undefined;
+
+                      return (
+                        result.error.issues[0]?.message ??
+                        "Invalid email"
+                      );
+                    },
                     onChange: ({ value }) => {
                       const result =
-                        registerSchema.shape.email.safeParse(
-                          value,
-                        );
+                        registerSchema.shape.email.safeParse(value);
 
-                      if (result.success) {
-                        return undefined;
-                      }
+                      if (result.success) return undefined;
 
                       return (
                         result.error.issues[0]?.message ??
@@ -196,13 +226,14 @@ export function RegisterForm() {
                 >
                   {(field) => {
                     const error =
-                      field.state.meta.errors[0];
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                        ? field.state.meta.errors[0]
+                        : null;
 
                     return (
                       <div className="space-y-2">
-                        <Label htmlFor="email">
-                          Email
-                        </Label>
+                        <Label htmlFor="email">Email</Label>
 
                         <Input
                           id="email"
@@ -212,16 +243,22 @@ export function RegisterForm() {
                           autoComplete="email"
                           value={field.state.value}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(error)}
+                          aria-describedby={
+                            error ? "email-error" : undefined
+                          }
                           onBlur={field.handleBlur}
                           onChange={(event) =>
-                            field.handleChange(
-                              event.target.value,
-                            )
+                            field.handleChange(event.target.value)
                           }
                         />
 
                         {error && (
-                          <p className="text-sm text-destructive">
+                          <p
+                            id="email-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                          >
                             {error}
                           </p>
                         )}
@@ -238,15 +275,22 @@ export function RegisterForm() {
               <form.Field
                 name="role"
                 validators={{
+                  onBlur: ({ value }) => {
+                    const result =
+                      registerSchema.shape.role.safeParse(value);
+
+                    if (result.success) return undefined;
+
+                    return (
+                      result.error.issues[0]?.message ??
+                      "Please select a role"
+                    );
+                  },
                   onChange: ({ value }) => {
                     const result =
-                      registerSchema.shape.role.safeParse(
-                        value,
-                      );
+                      registerSchema.shape.role.safeParse(value);
 
-                    if (result.success) {
-                      return undefined;
-                    }
+                    if (result.success) return undefined;
 
                     return (
                       result.error.issues[0]?.message ??
@@ -257,27 +301,25 @@ export function RegisterForm() {
               >
                 {(field) => {
                   const error =
-                    field.state.meta.errors[0];
+                    field.state.meta.isTouched &&
+                    field.state.meta.errors.length > 0
+                      ? field.state.meta.errors[0]
+                      : null;
 
                   return (
                     <div className="space-y-2">
                       <div>
-                        <Label>
-                          I want to join as
-                        </Label>
+                        <Label>I want to join as</Label>
 
                         <p className="text-xs text-muted-foreground">
-                          Choose how you will use the
-                          platform.
+                          Choose how you will use the platform.
                         </p>
                       </div>
 
                       <RadioGroup
                         value={field.state.value}
                         onValueChange={(value) => {
-                          field.handleChange(
-                            value as UserRole,
-                          );
+                          field.handleChange(value as UserRole);
                         }}
                         disabled={isSubmitting}
                         className="grid gap-3 sm:grid-cols-2"
@@ -299,8 +341,7 @@ export function RegisterForm() {
                             </p>
 
                             <p className="text-xs text-muted-foreground">
-                              Take assessments and view
-                              your results.
+                              Take assessments and view your results.
                             </p>
                           </div>
                         </label>
@@ -317,20 +358,20 @@ export function RegisterForm() {
                           />
 
                           <div className="space-y-0.5">
-                            <p className="text-sm font-medium">
-                              Creator
-                            </p>
+                            <p className="text-sm font-medium">Creator</p>
 
                             <p className="text-xs text-muted-foreground">
-                              Create and manage developer
-                              problems.
+                              Create and manage developer problems.
                             </p>
                           </div>
                         </label>
                       </RadioGroup>
 
                       {error && (
-                        <p className="text-sm text-destructive">
+                        <p
+                          role="alert"
+                          className="text-sm text-destructive"
+                        >
                           {error}
                         </p>
                       )}
@@ -340,7 +381,7 @@ export function RegisterForm() {
               </form.Field>
 
               {/* ========================= */}
-              {/* Password */}
+              {/* Password + Confirm */}
               {/* ========================= */}
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -348,15 +389,35 @@ export function RegisterForm() {
                 <form.Field
                   name="password"
                   validators={{
-                    onChange: ({ value }) => {
+                    onBlur: ({ value }) => {
                       const result =
-                        registerSchema.shape.password.safeParse(
-                          value,
-                        );
+                        registerSchema.shape.password.safeParse(value);
 
-                      if (result.success) {
-                        return undefined;
+                      if (result.success) return undefined;
+
+                      return (
+                        result.error.issues[0]?.message ??
+                        "Invalid password"
+                      );
+                    },
+                    onChange: ({ value, fieldApi }) => {
+                      const result =
+                        registerSchema.shape.password.safeParse(value);
+
+                      // Re-validate confirmPassword when password changes
+                      // so a stale "match" doesn't persist.
+                      const confirmField = form.getFieldInfo(
+                        "confirmPassword",
+                      );
+
+                      if (
+                        confirmField &&
+                        form.getFieldValue("confirmPassword")
+                      ) {
+                        form.validateField("confirmPassword", "change");
                       }
+
+                      if (result.success) return undefined;
 
                       return (
                         result.error.issues[0]?.message ??
@@ -367,13 +428,14 @@ export function RegisterForm() {
                 >
                   {(field) => {
                     const error =
-                      field.state.meta.errors[0];
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                        ? field.state.meta.errors[0]
+                        : null;
 
                     return (
                       <div className="space-y-2">
-                        <Label htmlFor="password">
-                          Password
-                        </Label>
+                        <Label htmlFor="password">Password</Label>
 
                         <Input
                           id="password"
@@ -383,16 +445,22 @@ export function RegisterForm() {
                           autoComplete="new-password"
                           value={field.state.value}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(error)}
+                          aria-describedby={
+                            error ? "password-error" : undefined
+                          }
                           onBlur={field.handleBlur}
                           onChange={(event) =>
-                            field.handleChange(
-                              event.target.value,
-                            )
+                            field.handleChange(event.target.value)
                           }
                         />
 
                         {error && (
-                          <p className="text-sm text-destructive">
+                          <p
+                            id="password-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                          >
                             {error}
                           </p>
                         )}
@@ -405,15 +473,23 @@ export function RegisterForm() {
                 <form.Field
                   name="confirmPassword"
                   validators={{
+                    onBlur: ({ value }) => {
+                      if (!value) {
+                        return "Please confirm your password";
+                      }
+
+                      if (value !== form.getFieldValue("password")) {
+                        return "Passwords do not match";
+                      }
+
+                      return undefined;
+                    },
                     onChange: ({ value }) => {
                       if (!value) {
                         return "Please confirm your password";
                       }
 
-                      if (
-                        value !==
-                        form.getFieldValue("password")
-                      ) {
+                      if (value !== form.getFieldValue("password")) {
                         return "Passwords do not match";
                       }
 
@@ -423,7 +499,10 @@ export function RegisterForm() {
                 >
                   {(field) => {
                     const error =
-                      field.state.meta.errors[0];
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                        ? field.state.meta.errors[0]
+                        : null;
 
                     return (
                       <div className="space-y-2">
@@ -439,16 +518,22 @@ export function RegisterForm() {
                           autoComplete="new-password"
                           value={field.state.value}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(error)}
+                          aria-describedby={
+                            error ? "confirm-password-error" : undefined
+                          }
                           onBlur={field.handleBlur}
                           onChange={(event) =>
-                            field.handleChange(
-                              event.target.value,
-                            )
+                            field.handleChange(event.target.value)
                           }
                         />
 
                         {error && (
-                          <p className="text-sm text-destructive">
+                          <p
+                            id="confirm-password-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                          >
                             {error}
                           </p>
                         )}
@@ -458,25 +543,7 @@ export function RegisterForm() {
                 </form.Field>
               </div>
 
-              {/* ========================= */}
-              {/* Backend Error */}
-              {/* ========================= */}
-
-              {registerMutation.isError && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5">
-                  <p className="text-sm text-destructive">
-                    {registerMutation.error instanceof
-                    Error
-                      ? registerMutation.error.message
-                      : "Registration failed. Please try again."}
-                  </p>
-                </div>
-              )}
-
-              {/* ========================= */}
               {/* Submit */}
-              {/* ========================= */}
-
               <Button
                 type="submit"
                 className="h-10 w-full"
@@ -485,7 +552,6 @@ export function RegisterForm() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
-
                     Creating account...
                   </>
                 ) : (
@@ -494,10 +560,7 @@ export function RegisterForm() {
               </Button>
             </form>
 
-            {/* ========================= */}
             {/* Login */}
-            {/* ========================= */}
-
             <p className="pt-1 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link

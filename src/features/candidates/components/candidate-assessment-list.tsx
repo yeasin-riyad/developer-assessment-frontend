@@ -176,7 +176,7 @@ export function CandidateAssessmentList({
                     href={`/assessments/attempts/${item.id}/result`}
                   >
                     View Result
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {/* <ArrowRight className="ml-2 h-4 w-4" /> */}
                   </Link>
                 </Button>
               )}

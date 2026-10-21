@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -23,6 +24,8 @@ interface CandidateResultPageProps {
 export function CandidateResultPage({
   attemptId,
 }: CandidateResultPageProps) {
+  const router = useRouter();
+
   const {
     data: result,
     isLoading,
@@ -53,6 +56,7 @@ export function CandidateResultPage({
       <ResultPendingState
         onRefresh={() => refetch()}
         isRefreshing={isFetching}
+        onBack={() => router.back()}
       />
     );
   }
@@ -62,6 +66,7 @@ export function CandidateResultPage({
       <ResultErrorState
         onRetry={() => refetch()}
         isRetrying={isFetching}
+        onBack={() => router.back()}
       />
     );
   }
@@ -72,13 +77,14 @@ export function CandidateResultPage({
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
       <div>
-        <Link
-          href="/assessments/my"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
         >
           <ArrowLeft className="size-4" />
-          Back to Assessments
-        </Link>
+          Back
+        </button>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -188,11 +194,13 @@ export function CandidateResultPage({
 interface ResultPendingStateProps {
   onRefresh: () => void;
   isRefreshing: boolean;
+  onBack: () => void;
 }
 
 function ResultPendingState({
   onRefresh,
   isRefreshing,
+  onBack,
 }: ResultPendingStateProps) {
   return (
     <div className="mx-auto max-w-3xl py-8">
@@ -254,13 +262,14 @@ function ResultPendingState({
                 : "Check Result Again"}
             </button>
 
-            <Link
-              href="/assessments/my"
+            <button
+              type="button"
+              onClick={onBack}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               <ArrowLeft className="size-4" />
-              Back to Assessments
-            </Link>
+              Back
+            </button>
           </div>
 
           {/* Note */}
@@ -281,11 +290,13 @@ function ResultPendingState({
 interface ResultErrorStateProps {
   onRetry: () => void;
   isRetrying: boolean;
+  onBack: () => void;
 }
 
 function ResultErrorState({
   onRetry,
   isRetrying,
+  onBack,
 }: ResultErrorStateProps) {
   return (
     <div className="mx-auto max-w-2xl py-8">
@@ -319,13 +330,14 @@ function ResultErrorState({
             {isRetrying ? "Retrying..." : "Try Again"}
           </button>
 
-          <Link
-            href="/assessments/my"
+          <button
+            type="button"
+            onClick={onBack}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
           >
             <ArrowLeft className="size-4" />
-            Back to Assessments
-          </Link>
+            Back
+          </button>
         </div>
       </div>
     </div>

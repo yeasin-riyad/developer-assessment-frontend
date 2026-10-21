@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -18,10 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import {
-  AuthDivider,
-  GoogleButton,
-} from "@/components/auth";
+import { AuthDivider, GoogleButton } from "@/components/auth";
 
 import {
   loginDefaultValues,
@@ -32,6 +28,7 @@ import {
 
 import { validateWithZod } from "@/lib/form-validation";
 import { setAccessToken } from "@/lib/auth";
+import { toast } from "sonner";
 
 const DEMO_ACCOUNTS = [
   {
@@ -65,12 +62,20 @@ export function LoginForm() {
   const registered = searchParams.get("registered");
 
   const form = useForm({
-    defaultValues:
-      loginDefaultValues satisfies LoginFormValues,
+    defaultValues: loginDefaultValues satisfies LoginFormValues,
 
     validators: {
-      onChange: ({ value }) =>
-        validateWithZod(loginSchema, value),
+      // Block submission when the schema fails.
+      // `validateWithZod` returns Record<string, string> or undefined.
+      onSubmit: ({ value }) => {
+        const errors = validateWithZod(loginSchema, value);
+
+        // TanStack Form treats a truthy return as form-level errors.
+        // Returning the record is fine here because it's used to
+        // mark the form invalid — we still render field errors from
+        // each field's own validators below.
+        return errors;
+      },
     },
 
     onSubmit: async ({ value }) => {
@@ -78,10 +83,7 @@ export function LoginForm() {
     },
   });
 
-  const handleLogin = async (
-    email: string,
-    password: string,
-  ) => {
+  const handleLogin = async (email: string, password: string) => {
     try {
       const response = await loginMutation.mutateAsync({
         email,
@@ -98,20 +100,45 @@ export function LoginForm() {
 
       window.dispatchEvent(new Event("auth:changed"));
 
+      toast.success("Login successful", {
+        description: "Welcome back! Redirecting to your dashboard.",
+      });
+
       router.replace("/dashboard");
     } catch (error) {
+      toast.error("Login failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Invalid email or password. Please try again.",
+      });
+
       console.error("Login failed:", error);
     }
   };
 
-  const handleDemoLogin = async (
-    email: string,
-    password: string,
-  ) => {
+  const handleDemoLogin = async (email: string, password: string) => {
     await handleLogin(email, password);
   };
 
   const isSubmitting = loginMutation.isPending;
+
+  /**
+   * Runs the full schema against the current form value, then
+   * picks out this field's message. Returns undefined when the
+   * field is valid.
+   */
+  const fieldError = (
+    value: Partial<LoginFormValues>,
+    field: keyof LoginFormValues,
+  ): string | undefined => {
+    const errors = validateWithZod(loginSchema, {
+      ...loginDefaultValues,
+      ...value,
+    });
+
+    return errors?.[field];
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6">
@@ -132,8 +159,7 @@ export function LoginForm() {
             {registered === "true" && (
               <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
                 <p className="text-sm text-green-700 dark:text-green-400">
-                  Account created successfully. Please sign in
-                  to continue.
+                  Account created successfully. Please sign in to continue.
                 </p>
               </div>
             )}
@@ -145,6 +171,7 @@ export function LoginForm() {
 
             {/* Login Form */}
             <form
+              noValidate
               onSubmit={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -153,9 +180,44 @@ export function LoginForm() {
               className="space-y-4"
             >
               {/* Email */}
-              <form.Field name="email">
+              <form.Field
+                name="email"
+                validators={{
+                  onBlur: ({ value, fieldApi }) => {
+                    const error = fieldError(
+                      { email: value },
+                      "email",
+                    );
+
+                    if (error) {
+                      fieldApi.setErrorMap({
+                        onBlur: error,
+                      });
+                    }
+
+                    return undefined;
+                  },
+                  onChange: ({ value, fieldApi }) => {
+                    const error = fieldError(
+                      { email: value },
+                      "email",
+                    );
+
+                    // Clear error while typing if the field becomes valid.
+                    if (!error) {
+                      fieldApi.setErrorMap({ onChange: undefined });
+                    }
+
+                    return undefined;
+                  },
+                }}
+              >
                 {(field) => {
-                  const error = field.state.meta.errors[0];
+                  const error =
+                    field.state.meta.isTouched &&
+                    field.state.meta.errors.length > 0
+                      ? field.state.meta.errors[0]
+                      : undefined;
 
                   return (
                     <div className="space-y-2">
@@ -169,6 +231,10 @@ export function LoginForm() {
                         autoComplete="email"
                         value={field.state.value}
                         disabled={isSubmitting}
+                        aria-invalid={Boolean(error)}
+                        aria-describedby={
+                          error ? "email-error" : undefined
+                        }
                         onBlur={field.handleBlur}
                         onChange={(event) =>
                           field.handleChange(event.target.value)
@@ -176,7 +242,11 @@ export function LoginForm() {
                       />
 
                       {error && (
-                        <p className="text-sm text-destructive">
+                        <p
+                          id="email-error"
+                          role="alert"
+                          className="text-sm text-destructive"
+                        >
                           {error}
                         </p>
                       )}
@@ -186,9 +256,41 @@ export function LoginForm() {
               </form.Field>
 
               {/* Password */}
-              <form.Field name="password">
+              <form.Field
+                name="password"
+                validators={{
+                  onBlur: ({ value, fieldApi }) => {
+                    const error = fieldError(
+                      { password: value },
+                      "password",
+                    );
+
+                    if (error) {
+                      fieldApi.setErrorMap({ onBlur: error });
+                    }
+
+                    return undefined;
+                  },
+                  onChange: ({ value, fieldApi }) => {
+                    const error = fieldError(
+                      { password: value },
+                      "password",
+                    );
+
+                    if (!error) {
+                      fieldApi.setErrorMap({ onChange: undefined });
+                    }
+
+                    return undefined;
+                  },
+                }}
+              >
                 {(field) => {
-                  const error = field.state.meta.errors[0];
+                  const error =
+                    field.state.meta.isTouched &&
+                    field.state.meta.errors.length > 0
+                      ? field.state.meta.errors[0]
+                      : undefined;
 
                   return (
                     <div className="space-y-2">
@@ -202,6 +304,10 @@ export function LoginForm() {
                         autoComplete="current-password"
                         value={field.state.value}
                         disabled={isSubmitting}
+                        aria-invalid={Boolean(error)}
+                        aria-describedby={
+                          error ? "password-error" : undefined
+                        }
                         onBlur={field.handleBlur}
                         onChange={(event) =>
                           field.handleChange(event.target.value)
@@ -209,7 +315,11 @@ export function LoginForm() {
                       />
 
                       {error && (
-                        <p className="text-sm text-destructive">
+                        <p
+                          id="password-error"
+                          role="alert"
+                          className="text-sm text-destructive"
+                        >
                           {error}
                         </p>
                       )}
@@ -217,17 +327,6 @@ export function LoginForm() {
                   );
                 }}
               </form.Field>
-
-              {/* Backend Error */}
-              {loginMutation.isError && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3">
-                  <p className="text-sm text-destructive">
-                    {loginMutation.error instanceof Error
-                      ? loginMutation.error.message
-                      : "Invalid email or password. Please try again."}
-                  </p>
-                </div>
-              )}
 
               {/* Submit */}
               <Button
@@ -269,10 +368,7 @@ export function LoginForm() {
                     size="sm"
                     disabled={isSubmitting}
                     onClick={() =>
-                      handleDemoLogin(
-                        account.email,
-                        account.password,
-                      )
+                      handleDemoLogin(account.email, account.password)
                     }
                   >
                     {isSubmitting ? (

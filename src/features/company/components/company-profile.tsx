@@ -98,16 +98,6 @@ export function CompanyProfile() {
               </div>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-        
-          >
-            <Link href="/company/edit">
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </Link>
-          </Button>
         </div>
 
         {company.description && (

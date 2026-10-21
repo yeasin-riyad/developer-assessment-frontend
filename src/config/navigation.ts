@@ -67,7 +67,6 @@ export const dashboardNavigation: NavigationItem[] = [
     roles: [
       UserRole.CREATOR,
       UserRole.RECRUITER,
-      UserRole.EVALUATOR,
       UserRole.ADMIN,
     ],
   },

@@ -49,7 +49,6 @@ export function CandidateDetails({
     );
   }
 
-  console.log(candidate)
 
   if (error || !candidate?.data) {
     return (
